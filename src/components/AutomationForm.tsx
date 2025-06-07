@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,7 +108,7 @@ const AutomationForm = ({ onBack }: AutomationFormProps) => {
 
     try {
       // Replace with your actual Make.com webhook URL
-      const webhookUrl = "https://hook.us1.make.com/your-webhook-url";
+      const webhookUrl = "https://hook.us2.make.com/9ncgoj14ec9a8kvj9u5i4ep6axtypus2";
       
       const response = await fetch(webhookUrl, {
         method: "POST",
