@@ -8,7 +8,7 @@ import Dashboard from "@/components/Dashboard";
 type AppState = "auth" | "welcome" | "form" | "dashboard";
 
 const Index = () => {
-  const [appState, setAppState] = useState<AppState>("auth");
+  const [appState, setAppState] = useState<AppState>("dashboard");
 
   const handleAuthSuccess = () => {
     setAppState("welcome");
@@ -31,7 +31,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-gray-50">
       {appState === "auth" && (
         <AuthPage onAuthSuccess={handleAuthSuccess} />
       )}
