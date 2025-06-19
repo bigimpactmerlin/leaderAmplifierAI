@@ -31,17 +31,17 @@ const PromptsTab = () => {
   };
 
   return (
-    <Card className="bg-white border border-gray-200">
+    <Card className="bg-white/10 backdrop-blur-sm border-white/20">
       <CardHeader>
-        <CardTitle className="flex items-center text-gray-900">
+        <CardTitle className="flex items-center text-white">
           <MessageSquare className="mr-2 h-5 w-5" />
           Custom Prompts
         </CardTitle>
-        <p className="text-gray-600">Configure your AI prompts for ideas and content generation</p>
+        <p className="text-gray-300">Configure your AI prompts for ideas and content generation</p>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <Label htmlFor="ideaPrompt" className="text-gray-900 text-lg font-medium">
+          <Label htmlFor="ideaPrompt" className="text-white text-lg font-medium">
             Idea Generation Prompt
           </Label>
           <Textarea
@@ -49,12 +49,12 @@ const PromptsTab = () => {
             placeholder="Enter your prompt for generating content ideas. Example: Generate creative content ideas for a tech startup focused on AI solutions..."
             value={ideaPrompt}
             onChange={(e) => setIdeaPrompt(e.target.value)}
-            className="mt-2 min-h-[120px] bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
+            className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-gray-400"
           />
         </div>
 
         <div>
-          <Label htmlFor="contentPrompt" className="text-gray-900 text-lg font-medium">
+          <Label htmlFor="contentPrompt" className="text-white text-lg font-medium">
             Content Generation Prompt
           </Label>
           <Textarea
@@ -62,13 +62,13 @@ const PromptsTab = () => {
             placeholder="Enter your prompt for generating actual content. Example: Create engaging social media content based on the selected ideas, keeping a professional yet approachable tone..."
             value={contentPrompt}
             onChange={(e) => setContentPrompt(e.target.value)}
-            className="mt-2 min-h-[120px] bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
+            className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-gray-400"
           />
         </div>
 
         <Button
           onClick={handleSave}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg"
+          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 text-lg"
         >
           Save Prompts
         </Button>
