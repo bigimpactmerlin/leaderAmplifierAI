@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,7 +103,7 @@ const IdeasTab = () => {
         <div className="mb-4">
           <Button 
             onClick={handleGenerateContent}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 text-white border-0"
             disabled={selectedIdeas.length === 0 || contentSelections.length === 0}
           >
             Generate Content ({contentSelections.length} pieces)
@@ -147,10 +146,10 @@ const IdeasTab = () => {
                             <Button 
                               variant="outline" 
                               size="sm"
-                              className={`text-xs border-white/20 hover:bg-white/10 ${
+                              className={`text-xs ${
                                 getSelectionForIdea(idea.id, platform) 
-                                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-transparent' 
-                                  : 'text-gray-300'
+                                  ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600' 
+                                  : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
                               }`}
                             >
                               {platform}
