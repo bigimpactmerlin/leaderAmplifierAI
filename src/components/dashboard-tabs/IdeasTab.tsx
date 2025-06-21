@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,31 +42,12 @@ const IdeasTab = () => {
     TikTok: ["Video", "Shorts"]
   };
 
-  const handleRowClick = (ideaId: number, event: React.MouseEvent) => {
-    // Prevent row selection if clicking on dropdown elements
-    const target = event.target as HTMLElement;
-    if (target.closest('[data-dropdown]')) {
-      return;
-    }
-
-    console.log('Row clicked, ideaId:', ideaId, 'currently selected:', selectedIdeas);
-    
-    setSelectedIdeas(prev => {
-      const newSelection = prev.includes(ideaId) 
+  const handleRowClick = (ideaId: number) => {
+    setSelectedIdeas(prev => 
+      prev.includes(ideaId) 
         ? prev.filter(id => id !== ideaId)
-        : [...prev, ideaId];
-      
-      console.log('New selection:', newSelection);
-      
-      // If deselecting, remove all content selections for this idea
-      if (prev.includes(ideaId)) {
-        setContentSelections(prevSelections => 
-          prevSelections.filter(sel => sel.ideaId !== ideaId)
-        );
-      }
-      
-      return newSelection;
-    });
+        : [...prev, ideaId]
+    );
   };
 
   const handleContentSelection = (ideaId: number, platform: string, contentType: string) => {
@@ -117,7 +97,7 @@ const IdeasTab = () => {
     <Card className="bg-white/10 backdrop-blur-sm border-white/20">
       <CardHeader>
         <CardTitle className="text-white">Content Ideas</CardTitle>
-        <p className="text-gray-300">Click on ideas to select them, then choose content types for each platform. Click again to unselect.</p>
+        <p className="text-gray-300">Click on ideas to select them, then choose content types for each platform</p>
       </CardHeader>
       <CardContent>
         <div className="mb-4">
@@ -147,7 +127,7 @@ const IdeasTab = () => {
                 className={`border-white/10 cursor-pointer transition-all hover:bg-white/5 ${
                   selectedIdeas.includes(idea.id) ? 'bg-purple-500/20 border-purple-400/30' : ''
                 }`}
-                onClick={(e) => handleRowClick(idea.id, e)}
+                onClick={() => handleRowClick(idea.id)}
               >
                 <TableCell className="text-white font-medium">{idea.title}</TableCell>
                 <TableCell className="text-gray-300">{idea.description}</TableCell>
@@ -157,9 +137,9 @@ const IdeasTab = () => {
                     {idea.status}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   {selectedIdeas.includes(idea.id) && (
-                    <div className="flex flex-wrap gap-2" data-dropdown>
+                    <div className="flex flex-wrap gap-2">
                       {Object.entries(platformContentTypes).map(([platform, contentTypes]) => (
                         <DropdownMenu key={platform}>
                           <DropdownMenuTrigger asChild>
@@ -179,7 +159,7 @@ const IdeasTab = () => {
                               <ChevronDown className="ml-1 h-3 w-3" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="bg-gray-800 border-gray-700 z-50" align="start">
+                          <DropdownMenuContent className="bg-gray-800 border-gray-700" align="start">
                             <DropdownMenuLabel className="text-white">{platform} Content Types</DropdownMenuLabel>
                             <DropdownMenuSeparator className="bg-gray-700" />
                             {contentTypes.map((contentType) => (
