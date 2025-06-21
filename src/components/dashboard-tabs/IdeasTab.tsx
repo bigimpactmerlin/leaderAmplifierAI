@@ -95,99 +95,93 @@ const IdeasTab = () => {
   };
 
   return (
-    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-lg border-slate-600/30 shadow-2xl">
-      <CardHeader className="border-b border-slate-600/30 bg-gradient-to-r from-slate-800/30 to-slate-700/30">
-        <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 text-2xl font-bold">
-          Content Ideas
-        </CardTitle>
-        <p className="text-slate-300">Click on ideas to select them, then choose content types for each platform</p>
+    <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+      <CardHeader>
+        <CardTitle className="text-white">Content Ideas</CardTitle>
+        <p className="text-gray-300">Click on ideas to select them, then choose content types for each platform</p>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="mb-6">
+      <CardContent>
+        <div className="mb-4">
           <Button 
             onClick={handleGenerateContent}
-            className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 text-white font-semibold px-6 py-3 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             disabled={selectedIdeas.length === 0 || contentSelections.length === 0}
           >
-            Generate Content ({contentSelections.length} pieces) ✨
+            Generate Content ({contentSelections.length} pieces)
           </Button>
         </div>
         
-        <div className="rounded-xl overflow-hidden border border-slate-600/30 bg-gradient-to-br from-slate-800/30 to-slate-900/30">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-slate-600/30 bg-gradient-to-r from-slate-700/50 to-slate-800/50">
-                <TableHead className="text-slate-200 font-semibold text-sm uppercase tracking-wide">Title</TableHead>
-                <TableHead className="text-slate-200 font-semibold text-sm uppercase tracking-wide">Description</TableHead>
-                <TableHead className="text-slate-200 font-semibold text-sm uppercase tracking-wide">Category</TableHead>
-                <TableHead className="text-slate-200 font-semibold text-sm uppercase tracking-wide">Status</TableHead>
-                <TableHead className="text-slate-200 font-semibold text-sm uppercase tracking-wide">Content Types</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ideas.map((idea) => (
-                <TableRow 
-                  key={idea.id} 
-                  className={`border-slate-600/20 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-slate-700/30 hover:to-slate-600/30 ${
-                    selectedIdeas.includes(idea.id) 
-                      ? 'bg-gradient-to-r from-blue-900/40 to-purple-900/40 border-blue-400/30 shadow-lg' 
-                      : 'hover:shadow-md'
-                  }`}
-                  onClick={() => handleRowClick(idea.id)}
-                >
-                  <TableCell className="text-slate-100 font-medium text-base py-4">{idea.title}</TableCell>
-                  <TableCell className="text-slate-300 py-4">{idea.description}</TableCell>
-                  <TableCell className="text-slate-300 py-4">{idea.category}</TableCell>
-                  <TableCell className="py-4">
-                    <span className="px-3 py-1.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 rounded-full text-sm font-medium border border-emerald-400/30">
-                      {idea.status}
-                    </span>
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()} className="py-4">
-                    {selectedIdeas.includes(idea.id) && (
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(platformContentTypes).map(([platform, contentTypes]) => (
-                          <DropdownMenu key={platform}>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className={`text-xs font-medium transition-all duration-200 ${
-                                  getSelectionForIdea(idea.id, platform) 
-                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-transparent shadow-md hover:from-blue-700 hover:to-purple-700' 
-                                    : 'bg-slate-700/50 text-slate-300 border-slate-500/30 hover:bg-slate-600/50 hover:text-slate-200'
-                                }`}
+        <Table>
+          <TableHeader>
+            <TableRow className="border-white/10">
+              <TableHead className="text-white">Title</TableHead>
+              <TableHead className="text-white">Description</TableHead>
+              <TableHead className="text-white">Category</TableHead>
+              <TableHead className="text-white">Status</TableHead>
+              <TableHead className="text-white">Content Types</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {ideas.map((idea) => (
+              <TableRow 
+                key={idea.id} 
+                className={`border-white/10 cursor-pointer transition-all hover:bg-white/5 ${
+                  selectedIdeas.includes(idea.id) ? 'bg-purple-500/20 border-purple-400/30' : ''
+                }`}
+                onClick={() => handleRowClick(idea.id)}
+              >
+                <TableCell className="text-white font-medium">{idea.title}</TableCell>
+                <TableCell className="text-gray-300">{idea.description}</TableCell>
+                <TableCell className="text-gray-300">{idea.category}</TableCell>
+                <TableCell>
+                  <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">
+                    {idea.status}
+                  </span>
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  {selectedIdeas.includes(idea.id) && (
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(platformContentTypes).map(([platform, contentTypes]) => (
+                        <DropdownMenu key={platform}>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className={`text-xs border-white/20 hover:bg-white/10 ${
+                                getSelectionForIdea(idea.id, platform) 
+                                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-transparent' 
+                                  : 'text-gray-300'
+                              }`}
+                            >
+                              {platform}
+                              {getSelectionForIdea(idea.id, platform) && 
+                                `: ${getSelectionForIdea(idea.id, platform)?.contentType}`
+                              }
+                              <ChevronDown className="ml-1 h-3 w-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="bg-gray-800 border-gray-700" align="start">
+                            <DropdownMenuLabel className="text-white">{platform} Content Types</DropdownMenuLabel>
+                            <DropdownMenuSeparator className="bg-gray-700" />
+                            {contentTypes.map((contentType) => (
+                              <DropdownMenuItem
+                                key={contentType}
+                                onClick={() => handleContentSelection(idea.id, platform, contentType)}
+                                className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
                               >
-                                {platform}
-                                {getSelectionForIdea(idea.id, platform) && 
-                                  `: ${getSelectionForIdea(idea.id, platform)?.contentType}`
-                                }
-                                <ChevronDown className="ml-1 h-3 w-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="bg-slate-800 border-slate-600 shadow-xl backdrop-blur-sm" align="start">
-                              <DropdownMenuLabel className="text-slate-200 font-semibold">{platform} Content Types</DropdownMenuLabel>
-                              <DropdownMenuSeparator className="bg-slate-600" />
-                              {contentTypes.map((contentType) => (
-                                <DropdownMenuItem
-                                  key={contentType}
-                                  onClick={() => handleContentSelection(idea.id, platform, contentType)}
-                                  className="text-slate-300 hover:bg-slate-700 hover:text-slate-100 cursor-pointer transition-colors duration-200"
-                                >
-                                  {contentType}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ))}
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                                {contentType}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ))}
+                    </div>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
