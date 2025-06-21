@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +52,19 @@ const IdeasTab = () => {
   };
 
   const handleContentSelection = (ideaId: number, platform: string, contentType: string) => {
+    if (contentType === "None") {
+      // Remove any existing selection for this platform
+      setContentSelections(prev => 
+        prev.filter(sel => !(sel.ideaId === ideaId && sel.platform === platform))
+      );
+      
+      toast({
+        title: "Content Selection Removed",
+        description: `Removed ${platform} content for "${ideas.find(i => i.id === ideaId)?.title}"`
+      });
+      return;
+    }
+
     const newSelection: ContentSelection = { ideaId, platform, contentType };
     
     setContentSelections(prev => {
@@ -161,6 +175,13 @@ const IdeasTab = () => {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="bg-gray-800 border-gray-700" align="start">
                             <DropdownMenuLabel className="text-white">{platform} Content Types</DropdownMenuLabel>
+                            <DropdownMenuSeparator className="bg-gray-700" />
+                            <DropdownMenuItem
+                              onClick={() => handleContentSelection(idea.id, platform, "None")}
+                              className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                            >
+                              None
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator className="bg-gray-700" />
                             {contentTypes.map((contentType) => (
                               <DropdownMenuItem
