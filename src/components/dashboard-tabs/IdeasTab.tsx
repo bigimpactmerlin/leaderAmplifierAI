@@ -25,6 +25,7 @@ const IdeasTab = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newIdeaContent, setNewIdeaContent] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const platformContentTypes = {
     LinkedIn: ["Article", "Post", "Newsletter", "Image"],
@@ -69,6 +70,33 @@ const IdeasTab = () => {
     });
   };
 
+  // Function to call LinkedIn webhook
+  const callLinkedInWebhook = async (ideaId: number) => {
+    try {
+      const webhookUrl = "https://hook.eu2.make.com/uo1mv8iqh5dnljhodml75kppe8e6j1fy";
+      
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idea_id: ideaId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Webhook call failed: ${response.status}`);
+      }
+
+      console.log(`LinkedIn webhook called successfully for idea ${ideaId}`);
+      return true;
+    } catch (error) {
+      console.error(`Error calling LinkedIn webhook for idea ${ideaId}:`, error);
+      throw error;
+    }
+  };
+
   const handleGenerateContent = async () => {
     if (selectedIdeas.length === 0) {
       toast({
@@ -88,19 +116,62 @@ const IdeasTab = () => {
       return;
     }
 
+    setIsGenerating(true);
+
     try {
+      // Separate LinkedIn selections from others
+      const linkedInSelections = contentSelections.filter(sel => sel.platform === "LinkedIn");
+      const otherSelections = contentSelections.filter(sel => sel.platform !== "LinkedIn");
+
+      // Call LinkedIn webhook for LinkedIn content selections
+      if (linkedInSelections.length > 0) {
+        const linkedInPromises = linkedInSelections.map(selection => 
+          callLinkedInWebhook(selection.ideaId)
+        );
+
+        try {
+          await Promise.all(linkedInPromises);
+          toast({
+            title: "LinkedIn Content Generation Started",
+            description: `Initiated LinkedIn content generation for ${linkedInSelections.length} ideas via webhook`
+          });
+        } catch (error) {
+          toast({
+            title: "LinkedIn Webhook Error",
+            description: "Some LinkedIn content generation requests failed. Check console for details.",
+            variant: "destructive"
+          });
+        }
+      }
+
+      // Handle other platforms (existing logic)
+      if (otherSelections.length > 0) {
+        toast({
+          title: "Content Generation Started",
+          description: `Generating ${otherSelections.length} content pieces for other platforms`
+        });
+      }
+
+      // Mark all selected ideas as used
       await markIdeasAsUsed(selectedIdeas);
       
       toast({
-        title: "Content Generation Started",
-        description: `Generating ${contentSelections.length} content pieces for ${selectedIdeas.length} selected ideas`
+        title: "Ideas Processed",
+        description: `Processed ${selectedIdeas.length} ideas for content generation`
       });
 
       // Clear selections
       setSelectedIdeas([]);
       setContentSelections([]);
     } catch (error) {
-      // Error handling is done in the hook
+      console.error("Error in content generation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process some content generation requests",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -188,9 +259,16 @@ const IdeasTab = () => {
           <Button 
             onClick={handleGenerateContent}
             className="bg-blue-600 hover:bg-blue-700 text-white border-0"
-            disabled={selectedIdeas.length === 0 || contentSelections.length === 0}
+            disabled={selectedIdeas.length === 0 || contentSelections.length === 0 || isGenerating}
           >
-            Generate Content ({contentSelections.length} pieces)
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              `Generate Content (${contentSelections.length} pieces)`
+            )}
           </Button>
           
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -295,11 +373,14 @@ const IdeasTab = () => {
                                 size="sm"
                                 className={`text-xs ${
                                   getSelectionForIdea(idea.id, platform) 
-                                    ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600' 
+                                    ? platform === 'LinkedIn' 
+                                      ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 ring-2 ring-blue-400' 
+                                      : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
                                     : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
                                 }`}
                               >
                                 {platform}
+                                {platform === 'LinkedIn' && getSelectionForIdea(idea.id, platform) && ' 🔗'}
                                 {getSelectionForIdea(idea.id, platform) && 
                                   `: ${getSelectionForIdea(idea.id, platform)?.contentType}`
                                 }
@@ -307,7 +388,10 @@ const IdeasTab = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="bg-gray-800 border-gray-700" align="start">
-                              <DropdownMenuLabel className="text-white">{platform} Content Types</DropdownMenuLabel>
+                              <DropdownMenuLabel className="text-white">
+                                {platform} Content Types
+                                {platform === 'LinkedIn' && ' (Webhook Enabled)'}
+                              </DropdownMenuLabel>
                               <DropdownMenuSeparator className="bg-gray-700" />
                               <DropdownMenuItem
                                 onClick={() => handleContentSelection(idea.id, platform, "None")}
@@ -323,6 +407,7 @@ const IdeasTab = () => {
                                   className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
                                 >
                                   {contentType}
+                                  {platform === 'LinkedIn' && ' 🔗'}
                                 </DropdownMenuItem>
                               ))}
                             </DropdownMenuContent>
@@ -345,6 +430,18 @@ const IdeasTab = () => {
               ))}
             </TableBody>
           </Table>
+        )}
+
+        {/* Info about LinkedIn Integration */}
+        {contentSelections.some(sel => sel.platform === 'LinkedIn') && (
+          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <span className="text-blue-400">🔗</span>
+              <span className="text-blue-300 text-sm">
+                LinkedIn content will be generated via webhook integration
+              </span>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
