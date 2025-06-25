@@ -45,7 +45,7 @@ export function useUsers() {
         .from('users')
         .select('*')
         .eq('id', id)
-        .maybeSingle()
+        .single()
 
       if (error) {
         throw error
@@ -180,7 +180,7 @@ export function useUsers() {
         .from('users')
         .select('*')
         .eq('email', email)
-        .maybeSingle()
+        .single()
 
       if (error) {
         throw error
@@ -193,8 +193,6 @@ export function useUsers() {
           description: `Welcome back, ${data.name || 'User'}!`
         })
         return data
-      } else {
-        throw new Error('User not found')
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'User not found'
@@ -230,8 +228,6 @@ export function useUsers() {
         if (user) {
           setCurrentUser(user)
         }
-      }).catch((err) => {
-        console.error('Failed to create demo user:', err)
       })
     })
   }, [])
