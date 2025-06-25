@@ -8,17 +8,13 @@ import ContentTab from "./dashboard-tabs/ContentTab";
 import SourcesTab from "./dashboard-tabs/SourcesTab";
 import TrackingTab from "./dashboard-tabs/TrackingTab";
 import PromptsTab from "./dashboard-tabs/PromptsTab";
-import { useAuth } from "@/hooks/useAuth";
 
 interface DashboardProps {
   onBack: () => void;
 }
 
 const Dashboard = ({ onBack }: DashboardProps) => {
-  const { user, signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
+  const handleSignOut = () => {
     onBack();
   };
 
@@ -49,8 +45,8 @@ const Dashboard = ({ onBack }: DashboardProps) => {
               <User className="h-4 w-4 text-white" />
             </div>
             <div>
-              <p className="text-sm font-medium text-white">{user?.email || 'User'}</p>
-              <p className="text-xs text-gray-400">Authenticated</p>
+              <p className="text-sm font-medium text-white">Demo User</p>
+              <p className="text-xs text-gray-400">demo@example.com</p>
             </div>
           </div>
           <div className="flex space-x-2">
