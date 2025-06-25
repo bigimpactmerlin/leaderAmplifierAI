@@ -148,3 +148,15 @@ export interface Database {
 export type Idea = Database['public']['Tables']['ideas']['Row']
 export type IdeaInsert = Database['public']['Tables']['ideas']['Insert']
 export type IdeaUpdate = Database['public']['Tables']['ideas']['Update']
+
+export type Content = Database['public']['Tables']['contents']['Row']
+export type ContentInsert = Database['public']['Tables']['contents']['Insert']
+export type ContentUpdate = Database['public']['Tables']['contents']['Update']
+
+export type User = Database['public']['Tables']['users']['Row']
+export type UserInsert = Database['public']['Tables']['users']['Insert']
+export type UserUpdate = Database['public']['Tables']['users']['Update']
+
+export type Source = Database['public']['Tables']['sources']['Row']
+export type SourceInsert = Database['public']['Tables']['sources']['Insert']
+export type SourceUpdate = Database['public']['Tables']['sources']['Update']
