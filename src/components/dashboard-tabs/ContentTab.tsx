@@ -71,7 +71,7 @@ const ContentTab = () => {
 
   // Publishing webhook URLs
   const publishingWebhooks = {
-    linkedin: "https://hook.eu2.make.com/lnv7kt3kgi1dwtiks5s5iv7exvmcb01c"
+    linkedin: "https://hook.eu2.make.com/xaikyfjrn4tbhuut7klil7e3f2slqt8w"
   };
 
   const handleSelectContent = (contentId: number) => {
