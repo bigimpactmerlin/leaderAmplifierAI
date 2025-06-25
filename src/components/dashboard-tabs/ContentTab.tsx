@@ -71,8 +71,7 @@ const ContentTab = () => {
 
   // Publishing webhook URLs
   const publishingWebhooks = {
-    linkedin: "https://hook.eu2.make.com/xaikyfjrn4tbhuut7klil7e3f2slqt8w",
-    facebook: "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje"
+    linkedin: "https://hook.eu2.make.com/lnv7kt3kgi1dwtiks5s5iv7exvmcb01c"
   };
 
   const handleSelectContent = (contentId: number) => {
@@ -365,7 +364,6 @@ const ContentTab = () => {
   const getWebhookIcon = (platform: string) => {
     switch (platform) {
       case 'linkedin': return '🔗';
-      case 'facebook': return '📘';
       default: return '';
     }
   };
