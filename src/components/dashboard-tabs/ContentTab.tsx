@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useContents } from "@/hooks/useContents";
-import { Loader2, Plus, RefreshCw, Trash2, Eye, ExternalLink } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Trash2, Eye, ExternalLink, Edit, Save } from "lucide-react";
 
 const ContentTab = () => {
   const { toast } = useToast();
@@ -19,6 +19,7 @@ const ContentTab = () => {
     deleteContent, 
     publishContent, 
     generateMoreContent,
+    updateContent,
     fetchContents 
   } = useContents();
 
@@ -26,13 +27,24 @@ const ContentTab = () => {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [viewingContent, setViewingContent] = useState<any>(null);
+  const [editingContent, setEditingContent] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Form state for creating new content
   const [newContent, setNewContent] = useState({
+    content: "",
+    platform: "",
+    type: "",
+    status: "draft"
+  });
+
+  // Form state for editing content
+  const [editContentForm, setEditContentForm] = useState({
     content: "",
     platform: "",
     type: "",
@@ -68,6 +80,57 @@ const ContentTab = () => {
         ? prev.filter(id => id !== contentId)
         : [...prev, contentId]
     );
+  };
+
+  const handleContentClick = (content: any, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setEditingContent(content);
+    setEditContentForm({
+      content: content.content || "",
+      platform: content.platform || "",
+      type: content.type || "",
+      status: content.status || "draft"
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateContent = async () => {
+    if (!editingContent || !editContentForm.content.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter content",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await updateContent(editingContent.id, {
+        content: editContentForm.content.trim(),
+        platform: editContentForm.platform,
+        type: editContentForm.type,
+        status: editContentForm.status
+      });
+      
+      setIsEditDialogOpen(false);
+      setEditingContent(null);
+      setEditContentForm({
+        content: "",
+        platform: "",
+        type: "",
+        status: "draft"
+      });
+      
+      toast({
+        title: "Success",
+        description: "Content updated successfully"
+      });
+    } catch (error) {
+      // Error handling is done in the hook
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleGenerateMore = async () => {
@@ -325,7 +388,7 @@ const ContentTab = () => {
     <Card className="bg-white/10 backdrop-blur-sm border-white/20">
       <CardHeader>
         <CardTitle className="text-white">Generated Content</CardTitle>
-        <p className="text-gray-300">Manage and publish your content</p>
+        <p className="text-gray-300">Manage and publish your content. Click on content to edit.</p>
       </CardHeader>
       <CardContent>
         <div className="mb-6 space-y-4">
@@ -529,11 +592,16 @@ const ContentTab = () => {
                     />
                   </TableCell>
                   <TableCell className="text-white font-mono text-sm">
-                    #{item.id}
+                    {item.id}
                   </TableCell>
                   <TableCell className="text-white font-medium max-w-xs">
-                    <div className="truncate" title={item.content || ''}>
-                      {item.content || 'No content'}
+                    <div 
+                      className="truncate cursor-pointer hover:bg-white/10 p-2 rounded transition-colors flex items-center space-x-2" 
+                      title={item.content || ''}
+                      onClick={(e) => handleContentClick(item, e)}
+                    >
+                      <span>{item.content || 'No content'}</span>
+                      <Edit className="h-3 w-3 opacity-50" />
                     </div>
                   </TableCell>
                   <TableCell className="text-gray-300">{capitalizeFirst(item.type)}</TableCell>
@@ -587,6 +655,89 @@ const ContentTab = () => {
           </Table>
         )}
 
+        {/* Edit Content Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="bg-gray-900 border-gray-700 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">Edit Content</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-content" className="text-white">Content *</Label>
+                <Textarea
+                  id="edit-content"
+                  placeholder="Enter your content..."
+                  value={editContentForm.content}
+                  onChange={(e) => setEditContentForm(prev => ({ ...prev, content: e.target.value }))}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[200px]"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-platform" className="text-white">Platform</Label>
+                  <Select value={editContentForm.platform} onValueChange={(value) => setEditContentForm(prev => ({ ...prev, platform: value }))}>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Select platform" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700">
+                      {socialMediaPlatforms.map((platform) => (
+                        <SelectItem key={platform.value} value={platform.value} className="text-white hover:bg-gray-700">
+                          {platform.label}
+                          {isPlatformWebhookEnabled(platform.value) && ` ${getWebhookIcon(platform.value)}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-type" className="text-white">Content Type</Label>
+                  <Select value={editContentForm.type} onValueChange={(value) => setEditContentForm(prev => ({ ...prev, type: value }))}>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700">
+                      {contentTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value} className="text-white hover:bg-gray-700">
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleUpdateContent}
+                  disabled={isUpdating}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => setIsEditDialogOpen(false)}
+                  variant="outline"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* View Content Dialog */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
           <DialogContent className="bg-gray-900 border-gray-700 max-w-2xl">
@@ -597,7 +748,7 @@ const ContentTab = () => {
               <div className="space-y-4">
                 <div>
                   <Label className="text-white">Content ID</Label>
-                  <p className="text-gray-300 font-mono">#{viewingContent.id}</p>
+                  <p className="text-gray-300 font-mono">{viewingContent.id}</p>
                 </div>
                 <div>
                   <Label className="text-white">Platform</Label>

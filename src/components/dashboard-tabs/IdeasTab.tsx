@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useIdeas } from "@/hooks/useIdeas";
-import { ChevronDown, Plus, Loader2, Trash2, RefreshCw } from "lucide-react";
+import { ChevronDown, Plus, Loader2, Trash2, RefreshCw, Edit, Save } from "lucide-react";
 
 interface ContentSelection {
   ideaId: number;
@@ -18,14 +18,18 @@ interface ContentSelection {
 
 const IdeasTab = () => {
   const { toast } = useToast();
-  const { ideas, loading, createIdea, deleteIdea, markIdeasAsUsed, fetchIdeas } = useIdeas();
+  const { ideas, loading, createIdea, deleteIdea, markIdeasAsUsed, updateIdea, fetchIdeas } = useIdeas();
   
   const [selectedIdeas, setSelectedIdeas] = useState<number[]>([]);
   const [contentSelections, setContentSelections] = useState<ContentSelection[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingIdea, setEditingIdea] = useState<any>(null);
   const [newIdeaContent, setNewIdeaContent] = useState("");
+  const [editIdeaContent, setEditIdeaContent] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const platformContentTypes = {
     LinkedIn: ["Article", "Post", "Newsletter", "Image"],
@@ -49,6 +53,44 @@ const IdeasTab = () => {
         ? prev.filter(id => id !== ideaId)
         : [...prev, ideaId]
     );
+  };
+
+  const handleContentClick = (idea: any, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setEditingIdea(idea);
+    setEditIdeaContent(idea.content || "");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateIdea = async () => {
+    if (!editingIdea || !editIdeaContent.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter idea content",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await updateIdea(editingIdea.id, {
+        content: editIdeaContent.trim()
+      });
+      
+      setIsEditDialogOpen(false);
+      setEditingIdea(null);
+      setEditIdeaContent("");
+      
+      toast({
+        title: "Success",
+        description: "Idea updated successfully"
+      });
+    } catch (error) {
+      // Error handling is done in the hook
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleContentSelection = (ideaId: number, platform: string, contentType: string) => {
@@ -329,7 +371,7 @@ const IdeasTab = () => {
     <Card className="bg-white/10 backdrop-blur-sm border-white/20">
       <CardHeader>
         <CardTitle className="text-white">Content Ideas</CardTitle>
-        <p className="text-gray-300">Click on ideas to select them, then choose content types for each platform</p>
+        <p className="text-gray-300">Click on ideas to select them, then choose content types for each platform. Click on content to edit.</p>
       </CardHeader>
       <CardContent>
         <div className="mb-4 flex gap-2">
@@ -367,7 +409,7 @@ const IdeasTab = () => {
                     placeholder="Enter your content idea..."
                     value={newIdeaContent}
                     onChange={(e) => setNewIdeaContent(e.target.value)}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[120px]"
                   />
                 </div>
                 <Button 
@@ -425,11 +467,16 @@ const IdeasTab = () => {
                   onClick={() => handleRowClick(idea.id)}
                 >
                   <TableCell className="text-white font-mono text-sm">
-                    #{idea.id}
+                    {idea.id}
                   </TableCell>
                   <TableCell className="text-white font-medium max-w-xs">
-                    <div className="truncate" title={idea.content || ''}>
-                      {idea.content || 'No content'}
+                    <div 
+                      className="truncate cursor-pointer hover:bg-white/10 p-2 rounded transition-colors flex items-center space-x-2" 
+                      title={idea.content || ''}
+                      onClick={(e) => handleContentClick(idea, e)}
+                    >
+                      <span>{idea.content || 'No content'}</span>
+                      <Edit className="h-3 w-3 opacity-50" />
                     </div>
                   </TableCell>
                   <TableCell>
@@ -512,6 +559,53 @@ const IdeasTab = () => {
             </TableBody>
           </Table>
         )}
+
+        {/* Edit Idea Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="bg-gray-900 border-gray-700 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">Edit Idea</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-content" className="text-white">Idea Content</Label>
+                <Textarea
+                  id="edit-content"
+                  placeholder="Enter your content idea..."
+                  value={editIdeaContent}
+                  onChange={(e) => setEditIdeaContent(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[200px]"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleUpdateIdea}
+                  disabled={isUpdating}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => setIsEditDialogOpen(false)}
+                  variant="outline"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Info about Webhook Integrations */}
         {contentSelections.some(sel => isPlatformWebhookEnabled(sel.platform)) && (
