@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +11,9 @@ import PromptsTab from "./dashboard-tabs/PromptsTab";
 import UsersTab from "./dashboard-tabs/UsersTab";
 import UserProfile from "./UserProfile";
 import { useUsers } from "@/hooks/useUsers";
+import { useIdeas } from "@/hooks/useIdeas";
+import { useContents } from "@/hooks/useContents";
+import { useSources } from "@/hooks/useSources";
 
 interface DashboardProps {
   onBack: () => void;
@@ -18,11 +21,29 @@ interface DashboardProps {
 
 const Dashboard = ({ onBack }: DashboardProps) => {
   const { currentUser, logout } = useUsers();
+  const { ideas } = useIdeas();
+  const { contents } = useContents();
+  const { sources } = useSources();
   const [activeTab, setActiveTab] = useState("ideas");
 
   const handleSignOut = () => {
     logout();
     onBack();
+  };
+
+  // Calculate stats
+  const totalIdeas = ideas.length;
+  const contentGenerated = contents.length;
+  const activeSources = sources.filter(source => source.key === 'Active').length;
+  
+  // Calculate engagement rate (mock calculation based on published content)
+  const publishedContent = contents.filter(content => content.status === 'published').length;
+  const engagementRate = contentGenerated > 0 ? ((publishedContent / contentGenerated) * 12.5).toFixed(1) : '0.0';
+
+  // Calculate growth percentages (mock data)
+  const getGrowthPercentage = (current: number, base: number = 20) => {
+    const growth = ((current - base) / base * 100);
+    return growth > 0 ? `+${growth.toFixed(1)}%` : `${growth.toFixed(1)}%`;
   };
 
   return (
@@ -103,8 +124,8 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                 <Lightbulb className="h-4 w-4 text-yellow-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">24</div>
-                <p className="text-xs text-green-400">+12% from last month</p>
+                <div className="text-2xl font-bold text-white">{totalIdeas}</div>
+                <p className="text-xs text-green-400">{getGrowthPercentage(totalIdeas)} from last month</p>
               </CardContent>
             </Card>
             
@@ -114,8 +135,8 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                 <FileText className="h-4 w-4 text-blue-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">142</div>
-                <p className="text-xs text-green-400">+8% from last month</p>
+                <div className="text-2xl font-bold text-white">{contentGenerated}</div>
+                <p className="text-xs text-green-400">{getGrowthPercentage(contentGenerated, 100)} from last month</p>
               </CardContent>
             </Card>
             
@@ -125,8 +146,8 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                 <Globe className="h-4 w-4 text-green-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">8</div>
-                <p className="text-xs text-green-400">+2 new this week</p>
+                <div className="text-2xl font-bold text-white">{activeSources}</div>
+                <p className="text-xs text-green-400">+{Math.max(0, activeSources - 5)} new this week</p>
               </CardContent>
             </Card>
             
@@ -136,7 +157,7 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                 <BarChart3 className="h-4 w-4 text-purple-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">12.5%</div>
+                <div className="text-2xl font-bold text-white">{engagementRate}%</div>
                 <p className="text-xs text-green-400">+2.1% from last month</p>
               </CardContent>
             </Card>

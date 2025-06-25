@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useContents } from "@/hooks/useContents";
-import { Loader2, Plus, RefreshCw, Trash2, Eye, ExternalLink } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Trash2, Eye, ExternalLink, Edit, Save } from "lucide-react";
 
 const ContentTab = () => {
   const { toast } = useToast();
@@ -19,6 +19,7 @@ const ContentTab = () => {
     deleteContent, 
     publishContent, 
     generateMoreContent,
+    updateContent,
     fetchContents 
   } = useContents();
 
@@ -26,8 +27,12 @@ const ContentTab = () => {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [viewingContent, setViewingContent] = useState<any>(null);
+  const [editingContent, setEditingContent] = useState<any>(null);
+  const [editContentText, setEditContentText] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Form state for creating new content
@@ -101,6 +106,29 @@ const ContentTab = () => {
     }
 
     try {
+      // Call LinkedIn webhook for selected content if LinkedIn is in selected platforms
+      if (selectedPlatforms.includes('linkedin')) {
+        const linkedinWebhookUrl = "https://hook.eu2.make.com/xaikyfjrn4tbhuut7klil7e3f2slqt8w";
+        
+        for (const contentId of selectedContent) {
+          try {
+            await fetch(linkedinWebhookUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              mode: "no-cors",
+              body: JSON.stringify({
+                content_id: contentId
+              }),
+            });
+            console.log(`LinkedIn webhook called for content ID: ${contentId}`);
+          } catch (error) {
+            console.error(`Error calling LinkedIn webhook for content ${contentId}:`, error);
+          }
+        }
+      }
+
       await publishContent(selectedContent, selectedPlatforms);
       setSelectedContent([]);
       setSelectedPlatforms([]);
@@ -155,6 +183,39 @@ const ContentTab = () => {
   const handleViewContent = (content: any) => {
     setViewingContent(content);
     setIsViewDialogOpen(true);
+  };
+
+  const handleEditContent = (content: any) => {
+    setEditingContent(content);
+    setEditContentText(content.content || "");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateContent = async () => {
+    if (!editingContent || !editContentText.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter content text",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    
+    try {
+      await updateContent(editingContent.id, {
+        content: editContentText
+      });
+
+      setEditContentText("");
+      setEditingContent(null);
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      // Error handling is done in the hook
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const getStatusColor = (status: string | null) => {
@@ -319,6 +380,7 @@ const ContentTab = () => {
                       }`}
                     >
                       {platform.label}
+                      {platform.value === 'linkedin' && selectedPlatforms.includes(platform.value) && ' 🔗'}
                     </button>
                   ))}
                 </div>
@@ -344,6 +406,7 @@ const ContentTab = () => {
             <TableHeader>
               <TableRow className="border-white/10">
                 <TableHead className="text-white">Select</TableHead>
+                <TableHead className="text-white">ID</TableHead>
                 <TableHead className="text-white">Content</TableHead>
                 <TableHead className="text-white">Type</TableHead>
                 <TableHead className="text-white">Platform</TableHead>
@@ -362,6 +425,9 @@ const ContentTab = () => {
                       onChange={() => handleSelectContent(item.id)}
                       className="w-4 h-4 text-purple-600 bg-white/10 border-white/30 rounded"
                     />
+                  </TableCell>
+                  <TableCell className="text-white font-mono text-sm">
+                    {item.id}
                   </TableCell>
                   <TableCell className="text-white font-medium max-w-xs">
                     <div className="truncate" title={item.content || ''}>
@@ -385,6 +451,14 @@ const ContentTab = () => {
                         className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
                       >
                         <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditContent(item)}
+                        className="text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/20"
+                      >
+                        <Edit className="h-4 w-4" />
                       </Button>
                       {item.content_url && (
                         <Button
@@ -421,6 +495,10 @@ const ContentTab = () => {
             {viewingContent && (
               <div className="space-y-4">
                 <div>
+                  <Label className="text-white">ID</Label>
+                  <p className="text-gray-300">{viewingContent.id}</p>
+                </div>
+                <div>
                   <Label className="text-white">Platform</Label>
                   <p className="text-gray-300">{capitalizeFirst(viewingContent.platform)}</p>
                 </div>
@@ -456,6 +534,67 @@ const ContentTab = () => {
                 <div>
                   <Label className="text-white">Created</Label>
                   <p className="text-gray-300">{formatDate(viewingContent.created_at)}</p>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Content Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="bg-gray-900 border-gray-700 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">Edit Content</DialogTitle>
+            </DialogHeader>
+            {editingContent && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-white">ID</Label>
+                  <p className="text-gray-300">{editingContent.id}</p>
+                </div>
+                <div>
+                  <Label className="text-white">Platform</Label>
+                  <p className="text-gray-300">{capitalizeFirst(editingContent.platform)}</p>
+                </div>
+                <div>
+                  <Label className="text-white">Type</Label>
+                  <p className="text-gray-300">{capitalizeFirst(editingContent.type)}</p>
+                </div>
+                <div>
+                  <Label htmlFor="edit-content-text" className="text-white">Content</Label>
+                  <Textarea
+                    id="edit-content-text"
+                    placeholder="Enter your content..."
+                    value={editContentText}
+                    onChange={(e) => setEditContentText(e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[150px]"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleUpdateContent}
+                    disabled={isUpdating}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Changes
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    onClick={() => setIsEditDialogOpen(false)}
+                    variant="outline"
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
             )}

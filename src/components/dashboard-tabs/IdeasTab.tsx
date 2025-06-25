@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useIdeas } from "@/hooks/useIdeas";
-import { ChevronDown, Plus, Loader2, Trash2, RefreshCw } from "lucide-react";
+import { ChevronDown, Plus, Loader2, Trash2, RefreshCw, Edit } from "lucide-react";
 
 interface ContentSelection {
   ideaId: number;
@@ -18,13 +18,17 @@ interface ContentSelection {
 
 const IdeasTab = () => {
   const { toast } = useToast();
-  const { ideas, loading, createIdea, deleteIdea, markIdeasAsUsed, fetchIdeas } = useIdeas();
+  const { ideas, loading, createIdea, deleteIdea, markIdeasAsUsed, updateIdea, fetchIdeas } = useIdeas();
   
   const [selectedIdeas, setSelectedIdeas] = useState<number[]>([]);
   const [contentSelections, setContentSelections] = useState<ContentSelection[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingIdea, setEditingIdea] = useState<any>(null);
   const [newIdeaContent, setNewIdeaContent] = useState("");
+  const [editIdeaContent, setEditIdeaContent] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const platformContentTypes = {
@@ -268,6 +272,39 @@ const IdeasTab = () => {
     }
   };
 
+  const handleEditIdea = (idea: any) => {
+    setEditingIdea(idea);
+    setEditIdeaContent(idea.content || "");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateIdea = async () => {
+    if (!editingIdea || !editIdeaContent.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter idea content",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    
+    try {
+      await updateIdea(editingIdea.id, {
+        content: editIdeaContent
+      });
+
+      setEditIdeaContent("");
+      setEditingIdea(null);
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      // Error handling is done in the hook
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleDeleteIdea = async (ideaId: number) => {
     try {
       await deleteIdea(ideaId);
@@ -425,7 +462,7 @@ const IdeasTab = () => {
                   onClick={() => handleRowClick(idea.id)}
                 >
                   <TableCell className="text-white font-mono text-sm">
-                    #{idea.id}
+                    {idea.id}
                   </TableCell>
                   <TableCell className="text-white font-medium max-w-xs">
                     <div className="truncate" title={idea.content || ''}>
@@ -498,20 +535,74 @@ const IdeasTab = () => {
                     )}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteIdea(idea.id)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditIdea(idea)}
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteIdea(idea.id)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
+
+        {/* Edit Idea Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="bg-gray-900 border-gray-700 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">Edit Idea</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-content" className="text-white">Idea Content</Label>
+                <Textarea
+                  id="edit-content"
+                  placeholder="Enter your content idea..."
+                  value={editIdeaContent}
+                  onChange={(e) => setEditIdeaContent(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[150px]"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleUpdateIdea}
+                  disabled={isUpdating}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Idea"
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => setIsEditDialogOpen(false)}
+                  variant="outline"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Info about Webhook Integrations */}
         {contentSelections.some(sel => isPlatformWebhookEnabled(sel.platform)) && (

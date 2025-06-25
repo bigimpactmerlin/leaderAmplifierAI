@@ -91,6 +91,10 @@ export function useIdeas() {
 
       if (data) {
         setIdeas(prev => prev.map(idea => idea.id === id ? data : idea))
+        toast({
+          title: "Success",
+          description: "Idea updated successfully"
+        })
         return data
       }
     } catch (err) {
