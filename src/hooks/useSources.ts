@@ -54,9 +54,11 @@ export function useSources() {
       const { data, error } = await supabase
         .from('sources')
         .insert([{
-          ...sourceData,
+          url: sourceData.url,
+          description: sourceData.description,
           source_type: sourceType,
-          key: sourceData.key || 'Active'
+          key: sourceData.key || 'Active',
+          user_id: sourceData.user_id || null
         }])
         .select()
         .single()

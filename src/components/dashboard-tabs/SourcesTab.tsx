@@ -52,6 +52,8 @@ const SourcesTab = () => {
         key: 'Active'
       });
       setNewSource("");
+    } catch (error) {
+      // Error handling is done in the hook
     } finally {
       setIsCreating(false);
     }
@@ -81,6 +83,8 @@ const SourcesTab = () => {
         source_type: ""
       });
       setIsCreateDialogOpen(false);
+    } catch (error) {
+      // Error handling is done in the hook
     } finally {
       setIsCreating(false);
     }
