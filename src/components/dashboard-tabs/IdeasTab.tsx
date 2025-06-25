@@ -42,9 +42,8 @@ const IdeasTab = () => {
 
   // Webhook URLs for different platforms
   const webhookUrls = {
-    LinkedIn: "https://hook.eu2.make.com/uo1mv8iqh5dnljhodml75kppe8e6j1fy",
-    Instagram: "https://hook.eu2.make.com/jd7mofm8w2622mjadxlya9w481f7rboq",
-    Facebook: "https://hook.eu2.make.com/eeia98ktnu8vth9epzmv89ym4a6eeyi3"
+    LinkedIn: "https://hook.eu2.make.com/xaikyfjrn4tbhuut7klil7e3f2slqt8w",
+    Facebook: "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje"
   };
 
   const handleRowClick = (ideaId: number) => {
@@ -345,10 +344,15 @@ const IdeasTab = () => {
   const getWebhookIcon = (platform: string) => {
     switch (platform) {
       case 'LinkedIn': return '🔗';
-      case 'Instagram': return '📸';
       case 'Facebook': return '📘';
       default: return '';
     }
+  };
+
+  // Convert priority score (0-1) to 1-10 scale
+  const getPriorityDisplay = (priorityScore: number | null) => {
+    if (!priorityScore) return '5';
+    return Math.round(priorityScore * 10).toString();
   };
 
   if (loading) {
@@ -451,7 +455,7 @@ const IdeasTab = () => {
                 <TableHead className="text-white">ID</TableHead>
                 <TableHead className="text-white">Content</TableHead>
                 <TableHead className="text-white">Status</TableHead>
-                <TableHead className="text-white">Priority</TableHead>
+                <TableHead className="text-white">Priority (1-10)</TableHead>
                 <TableHead className="text-white">Created</TableHead>
                 <TableHead className="text-white">Content Types</TableHead>
                 <TableHead className="text-white">Actions</TableHead>
@@ -485,7 +489,7 @@ const IdeasTab = () => {
                     </span>
                   </TableCell>
                   <TableCell className="text-gray-300">
-                    {idea.priority_score ? (idea.priority_score * 100).toFixed(0) : '50'}%
+                    {getPriorityDisplay(idea.priority_score)}
                   </TableCell>
                   <TableCell className="text-gray-300">
                     {formatDate(idea.created_at)}
