@@ -28,6 +28,7 @@ export function useUsers() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch users'
       setError(errorMessage)
+      console.error('Error fetching users:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -54,6 +55,7 @@ export function useUsers() {
       return data
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch user'
+      console.error('Error fetching user by ID:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -86,6 +88,7 @@ export function useUsers() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create user'
+      console.error('Error creating user:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -122,6 +125,7 @@ export function useUsers() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update user'
+      console.error('Error updating user:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -153,6 +157,7 @@ export function useUsers() {
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete user'
+      console.error('Error deleting user:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -196,6 +201,7 @@ export function useUsers() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'User not found'
+      console.error('Error logging in user:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -214,22 +220,37 @@ export function useUsers() {
     })
   }
 
-  // Load users on mount and set demo user
+  // Initialize and load users
   useEffect(() => {
-    fetchUsers()
-    // Set demo user for development
-    setCurrentUserById(1).catch(() => {
-      // If no user with ID 1 exists, create a demo user
-      createUser({
-        name: "Demo User",
-        email: "demo@example.com",
-        domain: "Technology"
-      }).then((user) => {
-        if (user) {
-          setCurrentUser(user)
+    const initializeUsers = async () => {
+      await fetchUsers()
+      
+      // Try to set a demo user if available, otherwise create one
+      try {
+        const { data: existingUsers } = await supabase
+          .from('users')
+          .select('*')
+          .limit(1)
+        
+        if (existingUsers && existingUsers.length > 0) {
+          setCurrentUser(existingUsers[0])
+        } else {
+          // Create a demo user if none exist
+          const demoUser = await createUser({
+            name: "Demo User",
+            email: "demo@example.com",
+            domain: "technology"
+          })
+          if (demoUser) {
+            setCurrentUser(demoUser)
+          }
         }
-      })
-    })
+      } catch (err) {
+        console.error('Error initializing demo user:', err)
+      }
+    }
+
+    initializeUsers()
   }, [])
 
   return {

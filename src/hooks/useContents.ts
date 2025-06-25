@@ -59,6 +59,7 @@ export function useContents() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch contents'
       setError(errorMessage)
+      console.error('Error fetching contents:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -95,6 +96,7 @@ export function useContents() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create content'
+      console.error('Error creating content:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -128,6 +130,7 @@ export function useContents() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update content'
+      console.error('Error updating content:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -156,6 +159,7 @@ export function useContents() {
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete content'
+      console.error('Error deleting content:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -192,6 +196,7 @@ export function useContents() {
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to publish content'
+      console.error('Error publishing content:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -208,22 +213,22 @@ export function useContents() {
       const sampleContents = [
         {
           content: "AI is revolutionizing healthcare with predictive analytics and personalized treatment plans.",
-          platform: "LinkedIn",
-          type: "Article",
+          platform: "linkedin",
+          type: "article",
           status: "draft",
           user_id: 1
         },
         {
           content: "The future of remote work: 5 trends shaping the digital workplace",
-          platform: "Twitter",
-          type: "Tweet",
+          platform: "twitter",
+          type: "tweet",
           status: "draft",
           user_id: 1
         },
         {
           content: "Sustainable fashion brands are leading the way in eco-conscious consumer choices",
-          platform: "Instagram",
-          type: "Post",
+          platform: "instagram",
+          type: "post",
           status: "draft",
           user_id: 1
         }
@@ -239,6 +244,7 @@ export function useContents() {
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate content'
+      console.error('Error generating content:', err)
       toast({
         title: "Error",
         description: errorMessage,

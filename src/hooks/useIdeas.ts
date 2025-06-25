@@ -27,6 +27,7 @@ export function useIdeas() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch ideas'
       setError(errorMessage)
+      console.error('Error fetching ideas:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -64,6 +65,7 @@ export function useIdeas() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create idea'
+      console.error('Error creating idea:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -93,6 +95,7 @@ export function useIdeas() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update idea'
+      console.error('Error updating idea:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -121,6 +124,7 @@ export function useIdeas() {
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete idea'
+      console.error('Error deleting idea:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -158,6 +162,7 @@ export function useIdeas() {
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to mark ideas as used'
+      console.error('Error marking ideas as used:', err)
       toast({
         title: "Error",
         description: errorMessage,

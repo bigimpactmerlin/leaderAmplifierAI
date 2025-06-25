@@ -160,3 +160,24 @@ export type UserUpdate = Database['public']['Tables']['users']['Update']
 export type Source = Database['public']['Tables']['sources']['Row']
 export type SourceInsert = Database['public']['Tables']['sources']['Insert']
 export type SourceUpdate = Database['public']['Tables']['sources']['Update']
+
+// Test connection function
+export const testConnection = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('count')
+      .limit(1)
+    
+    if (error) {
+      console.error('Supabase connection error:', error)
+      return false
+    }
+    
+    console.log('Supabase connection successful')
+    return true
+  } catch (err) {
+    console.error('Supabase connection failed:', err)
+    return false
+  }
+}

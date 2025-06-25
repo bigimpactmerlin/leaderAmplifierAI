@@ -27,6 +27,7 @@ export function useSources() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch sources'
       setError(errorMessage)
+      console.error('Error fetching sources:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -55,7 +56,7 @@ export function useSources() {
         .insert([{
           ...sourceData,
           source_type: sourceType,
-          user_id: sourceData.user_id || 1 // Using demo user ID
+          key: sourceData.key || 'Active'
         }])
         .select()
         .single()
@@ -74,6 +75,7 @@ export function useSources() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create source'
+      console.error('Error creating source:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -107,6 +109,7 @@ export function useSources() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update source'
+      console.error('Error updating source:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -135,6 +138,7 @@ export function useSources() {
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete source'
+      console.error('Error deleting source:', err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -173,6 +177,7 @@ export function useSources() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to toggle source status'
+      console.error('Error toggling source status:', err)
       toast({
         title: "Error",
         description: errorMessage,
