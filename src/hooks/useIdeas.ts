@@ -1,10 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase, type Idea } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/hooks/useAuth'
 
 export const useIdeas = () => {
+  const { user } = useAuth()
+  
   return useQuery({
-    queryKey: ['ideas'],
+    queryKey: ['ideas', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ideas')
@@ -16,19 +19,30 @@ export const useIdeas = () => {
       }
       
       return data as Idea[]
-    }
+    },
+    enabled: !!user // Only run query if user is authenticated
   })
 }
 
 export const useCreateIdea = () => {
   const queryClient = useQueryClient()
   const { toast } = useToast()
+  const { user } = useAuth()
   
   return useMutation({
     mutationFn: async (idea: Omit<Idea, 'id' | 'created_at'>) => {
+      if (!user) {
+        throw new Error('User must be authenticated')
+      }
+
+      const ideaWithUser = {
+        ...idea,
+        user_id: parseInt(user.id) // Convert auth user id to number for your schema
+      }
+
       const { data, error } = await supabase
         .from('ideas')
-        .insert([idea])
+        .insert([ideaWithUser])
         .select()
         .single()
       

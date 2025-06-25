@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
@@ -15,41 +15,29 @@ const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { signIn, signUp, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive"
-      });
       return;
     }
 
     if (!isLogin && password !== confirmPassword) {
-      toast({
-        title: "Error", 
-        description: "Passwords do not match",
-        variant: "destructive"
-      });
       return;
     }
 
-    setIsLoading(true);
-    
-    // Simulate authentication
-    setTimeout(() => {
-      toast({
-        title: "Success!",
-        description: isLogin ? "Logged in successfully" : "Account created successfully"
-      });
+    let result;
+    if (isLogin) {
+      result = await signIn(email, password);
+    } else {
+      result = await signUp(email, password);
+    }
+
+    if (result.data && !result.error) {
       onAuthSuccess();
-      setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -74,6 +62,7 @@ const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                required
               />
             </div>
             
@@ -86,6 +75,8 @@ const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                required
+                minLength={6}
               />
             </div>
 
@@ -99,16 +90,24 @@ const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  required
                 />
               </div>
             )}
 
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
             >
-              {isLoading ? "Processing..." : (isLogin ? "Sign In" : "Sign Up")}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isLogin ? "Signing in..." : "Creating account..."}
+                </>
+              ) : (
+                isLogin ? "Sign In" : "Sign Up"
+              )}
             </Button>
           </form>
 
@@ -116,6 +115,7 @@ const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
             <button
               onClick={() => setIsLogin(!isLogin)}
               className="text-white hover:text-gray-300 underline"
+              disabled={loading}
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>

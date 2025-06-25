@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,12 +8,20 @@ import ContentTab from "./dashboard-tabs/ContentTab";
 import SourcesTab from "./dashboard-tabs/SourcesTab";
 import TrackingTab from "./dashboard-tabs/TrackingTab";
 import PromptsTab from "./dashboard-tabs/PromptsTab";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DashboardProps {
   onBack: () => void;
 }
 
 const Dashboard = ({ onBack }: DashboardProps) => {
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    onBack();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex">
       {/* Sidebar */}
@@ -42,15 +49,20 @@ const Dashboard = ({ onBack }: DashboardProps) => {
               <User className="h-4 w-4 text-white" />
             </div>
             <div>
-              <p className="text-sm font-medium text-white">John Doe</p>
-              <p className="text-xs text-gray-400">john@example.com</p>
+              <p className="text-sm font-medium text-white">{user?.email || 'User'}</p>
+              <p className="text-xs text-gray-400">Authenticated</p>
             </div>
           </div>
           <div className="flex space-x-2">
             <Button variant="ghost" size="sm" className="flex-1 text-gray-300 hover:bg-gray-700 hover:text-white">
               <Settings className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="flex-1 text-gray-300 hover:bg-gray-700 hover:text-white" onClick={onBack}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex-1 text-gray-300 hover:bg-gray-700 hover:text-white" 
+              onClick={handleSignOut}
+            >
               <LogOut className="h-4 w-4" />
             </Button>
           </div>

@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronDown, Plus, Loader2, Trash2 } from "lucide-react";
 import { useIdeas, useCreateIdea, useUpdateIdea, useDeleteIdea } from "@/hooks/useIdeas";
+import { useAuth } from "@/hooks/useAuth";
 import { type Idea } from "@/lib/supabase";
 
 interface ContentSelection {
@@ -20,6 +20,7 @@ interface ContentSelection {
 
 const IdeasTab = () => {
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
   const { data: ideas = [], isLoading, error } = useIdeas();
   const createIdeaMutation = useCreateIdea();
   const updateIdeaMutation = useUpdateIdea();
@@ -120,7 +121,7 @@ const IdeasTab = () => {
     }
 
     createIdeaMutation.mutate({
-      user_id: 1, // You might want to get this from auth context
+      user_id: null, // Will be set automatically in the hook
       content: newIdeaContent,
       status: 'new',
       priority_score: 0.5,
@@ -146,6 +147,19 @@ const IdeasTab = () => {
       default: return "bg-gray-500/20 text-gray-300";
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+        <CardHeader>
+          <CardTitle className="text-white">Content Ideas</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-8">
+          <p className="text-gray-300">Please sign in to view your ideas.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
