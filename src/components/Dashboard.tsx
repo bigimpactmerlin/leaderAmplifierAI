@@ -11,6 +11,9 @@ import PromptsTab from "./dashboard-tabs/PromptsTab";
 import UsersTab from "./dashboard-tabs/UsersTab";
 import UserProfile from "./UserProfile";
 import { useUsers } from "@/hooks/useUsers";
+import { useIdeas } from "@/hooks/useIdeas";
+import { useContents } from "@/hooks/useContents";
+import { useSources } from "@/hooks/useSources";
 
 interface DashboardProps {
   onBack: () => void;
@@ -18,12 +21,37 @@ interface DashboardProps {
 
 const Dashboard = ({ onBack }: DashboardProps) => {
   const { currentUser, logout } = useUsers();
+  const { ideas } = useIdeas();
+  const { contents } = useContents();
+  const { sources } = useSources();
   const [activeTab, setActiveTab] = useState("ideas");
 
   const handleSignOut = () => {
     logout();
     onBack();
   };
+
+  // Calculate real statistics
+  const totalIdeas = ideas.length;
+  const newIdeas = ideas.filter(idea => idea.status === 'new').length;
+  const usedIdeas = ideas.filter(idea => idea.status === 'used').length;
+  
+  const totalContent = contents.length;
+  const publishedContent = contents.filter(content => content.status === 'published').length;
+  const draftContent = contents.filter(content => content.status === 'draft').length;
+  
+  const totalSources = sources.length;
+  const activeSources = sources.filter(source => source.key === 'Active').length;
+  const inactiveSources = sources.filter(source => source.key === 'Inactive').length;
+  
+  // Calculate engagement rate based on published vs total content
+  const engagementRate = totalContent > 0 ? ((publishedContent / totalContent) * 100).toFixed(1) : '0.0';
+  
+  // Calculate growth percentages (mock data for demonstration)
+  const ideasGrowth = totalIdeas > 0 ? '+15.3%' : '0%';
+  const contentGrowth = totalContent > 0 ? '+8.7%' : '0%';
+  const sourcesGrowth = activeSources > 0 ? `+${activeSources} active` : 'No sources';
+  const engagementGrowth = publishedContent > 0 ? '+2.1%' : '0%';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex">
@@ -103,8 +131,11 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                 <Lightbulb className="h-4 w-4 text-yellow-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">24</div>
-                <p className="text-xs text-green-400">+12% from last month</p>
+                <div className="text-2xl font-bold text-white">{totalIdeas}</div>
+                <p className="text-xs text-green-400">{ideasGrowth} from last month</p>
+                <div className="text-xs text-gray-400 mt-1">
+                  {newIdeas} new • {usedIdeas} used
+                </div>
               </CardContent>
             </Card>
             
@@ -114,8 +145,11 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                 <FileText className="h-4 w-4 text-blue-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">142</div>
-                <p className="text-xs text-green-400">+8% from last month</p>
+                <div className="text-2xl font-bold text-white">{totalContent}</div>
+                <p className="text-xs text-green-400">{contentGrowth} from last month</p>
+                <div className="text-xs text-gray-400 mt-1">
+                  {publishedContent} published • {draftContent} drafts
+                </div>
               </CardContent>
             </Card>
             
@@ -125,8 +159,11 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                 <Globe className="h-4 w-4 text-green-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">8</div>
-                <p className="text-xs text-green-400">+2 new this week</p>
+                <div className="text-2xl font-bold text-white">{activeSources}</div>
+                <p className="text-xs text-green-400">{sourcesGrowth}</p>
+                <div className="text-xs text-gray-400 mt-1">
+                  {totalSources} total • {inactiveSources} inactive
+                </div>
               </CardContent>
             </Card>
             
@@ -136,8 +173,11 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                 <BarChart3 className="h-4 w-4 text-purple-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">12.5%</div>
-                <p className="text-xs text-green-400">+2.1% from last month</p>
+                <div className="text-2xl font-bold text-white">{engagementRate}%</div>
+                <p className="text-xs text-green-400">{engagementGrowth} from last month</p>
+                <div className="text-xs text-gray-400 mt-1">
+                  Based on published content
+                </div>
               </CardContent>
             </Card>
           </div>
