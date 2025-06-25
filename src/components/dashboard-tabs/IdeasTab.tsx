@@ -7,16 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, Plus, Loader2, Trash2 } from "lucide-react";
-
-interface Idea {
-  id: number;
-  content: string;
-  status: string;
-  priority_score: number;
-  created_at: string;
-  used_at: string | null;
-}
+import { useIdeas } from "@/hooks/useIdeas";
+import { ChevronDown, Plus, Loader2, Trash2, RefreshCw } from "lucide-react";
 
 interface ContentSelection {
   ideaId: number;
@@ -26,21 +18,13 @@ interface ContentSelection {
 
 const IdeasTab = () => {
   const { toast } = useToast();
-  
-  // Demo data - replace with actual Supabase data when authentication is restored
-  const [ideas, setIdeas] = useState<Idea[]>([
-    { id: 1, content: "AI in Healthcare: Exploring applications in medical diagnosis", status: "new", priority_score: 0.8, created_at: "2024-01-15", used_at: null },
-    { id: 2, content: "Remote Work Trends: Analyzing latest statistics and insights", status: "new", priority_score: 0.7, created_at: "2024-01-14", used_at: null },
-    { id: 3, content: "Sustainable Fashion: Spotlight on eco-friendly brands", status: "used", priority_score: 0.6, created_at: "2024-01-13", used_at: "2024-01-16" },
-    { id: 4, content: "Social Media Marketing: Best practices for 2024", status: "new", priority_score: 0.9, created_at: "2024-01-12", used_at: null },
-    { id: 5, content: "Fitness Technology: Wearable device comparison", status: "new", priority_score: 0.5, created_at: "2024-01-11", used_at: null }
-  ]);
+  const { ideas, loading, createIdea, deleteIdea, markIdeasAsUsed, fetchIdeas } = useIdeas();
   
   const [selectedIdeas, setSelectedIdeas] = useState<number[]>([]);
   const [contentSelections, setContentSelections] = useState<ContentSelection[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newIdeaContent, setNewIdeaContent] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const platformContentTypes = {
     LinkedIn: ["Article", "Post", "Newsletter", "Image"],
@@ -85,7 +69,7 @@ const IdeasTab = () => {
     });
   };
 
-  const handleGenerateContent = () => {
+  const handleGenerateContent = async () => {
     if (selectedIdeas.length === 0) {
       toast({
         title: "No ideas selected",
@@ -104,24 +88,23 @@ const IdeasTab = () => {
       return;
     }
 
-    // Mark selected ideas as used
-    setIdeas(prev => prev.map(idea => 
-      selectedIdeas.includes(idea.id) 
-        ? { ...idea, status: 'used', used_at: new Date().toISOString() }
-        : idea
-    ));
+    try {
+      await markIdeasAsUsed(selectedIdeas);
+      
+      toast({
+        title: "Content Generation Started",
+        description: `Generating ${contentSelections.length} content pieces for ${selectedIdeas.length} selected ideas`
+      });
 
-    toast({
-      title: "Content Generation Started",
-      description: `Generating ${contentSelections.length} content pieces for ${selectedIdeas.length} selected ideas`
-    });
-
-    // Clear selections
-    setSelectedIdeas([]);
-    setContentSelections([]);
+      // Clear selections
+      setSelectedIdeas([]);
+      setContentSelections([]);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
   };
 
-  const handleCreateIdea = () => {
+  const handleCreateIdea = async () => {
     if (!newIdeaContent.trim()) {
       toast({
         title: "Error",
@@ -131,50 +114,68 @@ const IdeasTab = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsCreating(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const newIdea: Idea = {
-        id: Date.now(),
+    try {
+      await createIdea({
         content: newIdeaContent,
         status: 'new',
         priority_score: 0.5,
-        created_at: new Date().toISOString(),
-        used_at: null
-      };
+        user_id: 1 // Using demo user ID - replace with actual user when auth is implemented
+      });
 
-      setIdeas(prev => [newIdea, ...prev]);
       setNewIdeaContent("");
       setIsCreateDialogOpen(false);
-      setIsLoading(false);
-
-      toast({
-        title: "Success",
-        description: "Idea created successfully"
-      });
-    }, 1000);
+    } catch (error) {
+      // Error handling is done in the hook
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleDeleteIdea = (ideaId: number) => {
-    setIdeas(prev => prev.filter(idea => idea.id !== ideaId));
-    toast({
-      title: "Success",
-      description: "Idea deleted successfully"
-    });
+  const handleDeleteIdea = async (ideaId: number) => {
+    try {
+      await deleteIdea(ideaId);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchIdeas();
   };
 
   const getSelectionForIdea = (ideaId: number, platform: string) => {
     return contentSelections.find(sel => sel.ideaId === ideaId && sel.platform === platform);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
       case "used": return "bg-green-500/20 text-green-300";
       case "new": return "bg-blue-500/20 text-blue-300";
       default: return "bg-gray-500/20 text-gray-300";
     }
   };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  if (loading) {
+    return (
+      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+        <CardHeader>
+          <CardTitle className="text-white">Content Ideas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-white" />
+            <span className="ml-2 text-white">Loading ideas...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-white/10 backdrop-blur-sm border-white/20">
@@ -216,10 +217,10 @@ const IdeasTab = () => {
                 </div>
                 <Button 
                   onClick={handleCreateIdea}
-                  disabled={isLoading}
+                  disabled={isCreating}
                   className="w-full bg-green-600 hover:bg-green-700"
                 >
-                  {isLoading ? (
+                  {isCreating ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Creating...
@@ -231,105 +232,120 @@ const IdeasTab = () => {
               </div>
             </DialogContent>
           </Dialog>
+
+          <Button 
+            onClick={handleRefresh}
+            variant="outline"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
         
-        <Table>
-          <TableHeader>
-            <TableRow className="border-white/10">
-              <TableHead className="text-white">Content</TableHead>
-              <TableHead className="text-white">Status</TableHead>
-              <TableHead className="text-white">Priority</TableHead>
-              <TableHead className="text-white">Created</TableHead>
-              <TableHead className="text-white">Content Types</TableHead>
-              <TableHead className="text-white">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {ideas.map((idea) => (
-              <TableRow 
-                key={idea.id} 
-                className={`border-white/10 cursor-pointer transition-all hover:bg-white/5 ${
-                  selectedIdeas.includes(idea.id) ? 'bg-purple-500/20 border-purple-400/30' : ''
-                }`}
-                onClick={() => handleRowClick(idea.id)}
-              >
-                <TableCell className="text-white font-medium max-w-xs">
-                  <div className="truncate" title={idea.content}>
-                    {idea.content}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(idea.status)}`}>
-                    {idea.status}
-                  </span>
-                </TableCell>
-                <TableCell className="text-gray-300">
-                  {(idea.priority_score * 100).toFixed(0)}%
-                </TableCell>
-                <TableCell className="text-gray-300">
-                  {new Date(idea.created_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  {selectedIdeas.includes(idea.id) && (
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(platformContentTypes).map(([platform, contentTypes]) => (
-                        <DropdownMenu key={platform}>
-                          <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className={`text-xs ${
-                                getSelectionForIdea(idea.id, platform) 
-                                  ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600' 
-                                  : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
-                              }`}
-                            >
-                              {platform}
-                              {getSelectionForIdea(idea.id, platform) && 
-                                `: ${getSelectionForIdea(idea.id, platform)?.contentType}`
-                              }
-                              <ChevronDown className="ml-1 h-3 w-3" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="bg-gray-800 border-gray-700" align="start">
-                            <DropdownMenuLabel className="text-white">{platform} Content Types</DropdownMenuLabel>
-                            <DropdownMenuSeparator className="bg-gray-700" />
-                            <DropdownMenuItem
-                              onClick={() => handleContentSelection(idea.id, platform, "None")}
-                              className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                            >
-                              None
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-gray-700" />
-                            {contentTypes.map((contentType) => (
+        {ideas.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-300 mb-4">No ideas found. Create your first idea to get started!</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="border-white/10">
+                <TableHead className="text-white">Content</TableHead>
+                <TableHead className="text-white">Status</TableHead>
+                <TableHead className="text-white">Priority</TableHead>
+                <TableHead className="text-white">Created</TableHead>
+                <TableHead className="text-white">Content Types</TableHead>
+                <TableHead className="text-white">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ideas.map((idea) => (
+                <TableRow 
+                  key={idea.id} 
+                  className={`border-white/10 cursor-pointer transition-all hover:bg-white/5 ${
+                    selectedIdeas.includes(idea.id) ? 'bg-purple-500/20 border-purple-400/30' : ''
+                  }`}
+                  onClick={() => handleRowClick(idea.id)}
+                >
+                  <TableCell className="text-white font-medium max-w-xs">
+                    <div className="truncate" title={idea.content || ''}>
+                      {idea.content || 'No content'}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(idea.status)}`}>
+                      {idea.status || 'new'}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-gray-300">
+                    {idea.priority_score ? (idea.priority_score * 100).toFixed(0) : '50'}%
+                  </TableCell>
+                  <TableCell className="text-gray-300">
+                    {formatDate(idea.created_at)}
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    {selectedIdeas.includes(idea.id) && (
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(platformContentTypes).map(([platform, contentTypes]) => (
+                          <DropdownMenu key={platform}>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className={`text-xs ${
+                                  getSelectionForIdea(idea.id, platform) 
+                                    ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600' 
+                                    : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
+                                }`}
+                              >
+                                {platform}
+                                {getSelectionForIdea(idea.id, platform) && 
+                                  `: ${getSelectionForIdea(idea.id, platform)?.contentType}`
+                                }
+                                <ChevronDown className="ml-1 h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="bg-gray-800 border-gray-700" align="start">
+                              <DropdownMenuLabel className="text-white">{platform} Content Types</DropdownMenuLabel>
+                              <DropdownMenuSeparator className="bg-gray-700" />
                               <DropdownMenuItem
-                                key={contentType}
-                                onClick={() => handleContentSelection(idea.id, platform, contentType)}
+                                onClick={() => handleContentSelection(idea.id, platform, "None")}
                                 className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
                               >
-                                {contentType}
+                                None
                               </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      ))}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteIdea(idea.id)}
-                    className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                              <DropdownMenuSeparator className="bg-gray-700" />
+                              {contentTypes.map((contentType) => (
+                                <DropdownMenuItem
+                                  key={contentType}
+                                  onClick={() => handleContentSelection(idea.id, platform, contentType)}
+                                  className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                                >
+                                  {contentType}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ))}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteIdea(idea.id)}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );
