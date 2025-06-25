@@ -36,6 +36,13 @@ const IdeasTab = () => {
     TikTok: ["Video", "Shorts"]
   };
 
+  // Webhook URLs for different platforms
+  const webhookUrls = {
+    LinkedIn: "https://hook.eu2.make.com/uo1mv8iqh5dnljhodml75kppe8e6j1fy",
+    Instagram: "https://hook.eu2.make.com/jd7mofm8w2622mjadxlya9w481f7rboq",
+    Facebook: "https://hook.eu2.make.com/eeia98ktnu8vth9epzmv89ym4a6eeyi3"
+  };
+
   const handleRowClick = (ideaId: number) => {
     setSelectedIdeas(prev => 
       prev.includes(ideaId) 
@@ -70,11 +77,16 @@ const IdeasTab = () => {
     });
   };
 
-  // Function to call LinkedIn webhook
-  const callLinkedInWebhook = async (ideaId: number) => {
+  // Function to call webhook for specific platform
+  const callPlatformWebhook = async (platform: string, ideaId: number) => {
+    const webhookUrl = webhookUrls[platform as keyof typeof webhookUrls];
+    
+    if (!webhookUrl) {
+      console.warn(`No webhook URL configured for platform: ${platform}`);
+      return false;
+    }
+
     try {
-      const webhookUrl = "https://hook.eu2.make.com/uo1mv8iqh5dnljhodml75kppe8e6j1fy";
-      
       const response = await fetch(webhookUrl, {
         method: "POST",
         headers: {
@@ -89,10 +101,10 @@ const IdeasTab = () => {
         throw new Error(`Webhook call failed: ${response.status}`);
       }
 
-      console.log(`LinkedIn webhook called successfully for idea ${ideaId}`);
+      console.log(`${platform} webhook called successfully for idea ${ideaId}`);
       return true;
     } catch (error) {
-      console.error(`Error calling LinkedIn webhook for idea ${ideaId}:`, error);
+      console.error(`Error calling ${platform} webhook for idea ${ideaId}:`, error);
       throw error;
     }
   };
@@ -119,36 +131,77 @@ const IdeasTab = () => {
     setIsGenerating(true);
 
     try {
-      // Separate LinkedIn selections from others
-      const linkedInSelections = contentSelections.filter(sel => sel.platform === "LinkedIn");
-      const otherSelections = contentSelections.filter(sel => sel.platform !== "LinkedIn");
+      // Group selections by platform
+      const platformGroups = contentSelections.reduce((groups, selection) => {
+        if (!groups[selection.platform]) {
+          groups[selection.platform] = [];
+        }
+        groups[selection.platform].push(selection);
+        return groups;
+      }, {} as Record<string, ContentSelection[]>);
 
-      // Call LinkedIn webhook for LinkedIn content selections
-      if (linkedInSelections.length > 0) {
-        const linkedInPromises = linkedInSelections.map(selection => 
-          callLinkedInWebhook(selection.ideaId)
-        );
+      // Process webhook-enabled platforms
+      const webhookPlatforms = Object.keys(webhookUrls);
+      const webhookResults = [];
+      const otherPlatforms = [];
 
-        try {
-          await Promise.all(linkedInPromises);
-          toast({
-            title: "LinkedIn Content Generation Started",
-            description: `Initiated LinkedIn content generation for ${linkedInSelections.length} ideas via webhook`
-          });
-        } catch (error) {
-          toast({
-            title: "LinkedIn Webhook Error",
-            description: "Some LinkedIn content generation requests failed. Check console for details.",
-            variant: "destructive"
-          });
+      for (const [platform, selections] of Object.entries(platformGroups)) {
+        if (webhookPlatforms.includes(platform)) {
+          // Call webhook for each idea in this platform
+          const platformPromises = selections.map(selection => 
+            callPlatformWebhook(platform, selection.ideaId)
+          );
+
+          try {
+            await Promise.all(platformPromises);
+            webhookResults.push({
+              platform,
+              count: selections.length,
+              success: true
+            });
+          } catch (error) {
+            webhookResults.push({
+              platform,
+              count: selections.length,
+              success: false,
+              error
+            });
+          }
+        } else {
+          otherPlatforms.push({ platform, count: selections.length });
         }
       }
 
-      // Handle other platforms (existing logic)
-      if (otherSelections.length > 0) {
+      // Show results for webhook platforms
+      const successfulWebhooks = webhookResults.filter(r => r.success);
+      const failedWebhooks = webhookResults.filter(r => !r.success);
+
+      if (successfulWebhooks.length > 0) {
+        const platformNames = successfulWebhooks.map(r => r.platform).join(", ");
+        const totalCount = successfulWebhooks.reduce((sum, r) => sum + r.count, 0);
+        
         toast({
-          title: "Content Generation Started",
-          description: `Generating ${otherSelections.length} content pieces for other platforms`
+          title: "Webhook Content Generation Started",
+          description: `Initiated content generation for ${totalCount} pieces across ${platformNames}`
+        });
+      }
+
+      if (failedWebhooks.length > 0) {
+        const platformNames = failedWebhooks.map(r => r.platform).join(", ");
+        
+        toast({
+          title: "Webhook Errors",
+          description: `Some webhook calls failed for: ${platformNames}. Check console for details.`,
+          variant: "destructive"
+        });
+      }
+
+      // Handle other platforms (existing logic)
+      if (otherPlatforms.length > 0) {
+        const totalOtherCount = otherPlatforms.reduce((sum, p) => sum + p.count, 0);
+        toast({
+          title: "Standard Content Generation",
+          description: `Generating ${totalOtherCount} content pieces for other platforms`
         });
       }
 
@@ -230,6 +283,19 @@ const IdeasTab = () => {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const isPlatformWebhookEnabled = (platform: string) => {
+    return Object.keys(webhookUrls).includes(platform);
+  };
+
+  const getWebhookIcon = (platform: string) => {
+    switch (platform) {
+      case 'LinkedIn': return '🔗';
+      case 'Instagram': return '📸';
+      case 'Facebook': return '📘';
+      default: return '';
+    }
   };
 
   if (loading) {
@@ -373,14 +439,14 @@ const IdeasTab = () => {
                                 size="sm"
                                 className={`text-xs ${
                                   getSelectionForIdea(idea.id, platform) 
-                                    ? platform === 'LinkedIn' 
+                                    ? isPlatformWebhookEnabled(platform)
                                       ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 ring-2 ring-blue-400' 
                                       : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
                                     : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
                                 }`}
                               >
                                 {platform}
-                                {platform === 'LinkedIn' && getSelectionForIdea(idea.id, platform) && ' 🔗'}
+                                {isPlatformWebhookEnabled(platform) && getSelectionForIdea(idea.id, platform) && ` ${getWebhookIcon(platform)}`}
                                 {getSelectionForIdea(idea.id, platform) && 
                                   `: ${getSelectionForIdea(idea.id, platform)?.contentType}`
                                 }
@@ -390,7 +456,7 @@ const IdeasTab = () => {
                             <DropdownMenuContent className="bg-gray-800 border-gray-700" align="start">
                               <DropdownMenuLabel className="text-white">
                                 {platform} Content Types
-                                {platform === 'LinkedIn' && ' (Webhook Enabled)'}
+                                {isPlatformWebhookEnabled(platform) && ` (Webhook Enabled ${getWebhookIcon(platform)})`}
                               </DropdownMenuLabel>
                               <DropdownMenuSeparator className="bg-gray-700" />
                               <DropdownMenuItem
@@ -407,7 +473,7 @@ const IdeasTab = () => {
                                   className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
                                 >
                                   {contentType}
-                                  {platform === 'LinkedIn' && ' 🔗'}
+                                  {isPlatformWebhookEnabled(platform) && ` ${getWebhookIcon(platform)}`}
                                 </DropdownMenuItem>
                               ))}
                             </DropdownMenuContent>
@@ -432,14 +498,31 @@ const IdeasTab = () => {
           </Table>
         )}
 
-        {/* Info about LinkedIn Integration */}
-        {contentSelections.some(sel => sel.platform === 'LinkedIn') && (
-          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-400/30 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <span className="text-blue-400">🔗</span>
-              <span className="text-blue-300 text-sm">
-                LinkedIn content will be generated via webhook integration
-              </span>
+        {/* Info about Webhook Integrations */}
+        {contentSelections.some(sel => isPlatformWebhookEnabled(sel.platform)) && (
+          <div className="mt-4 p-4 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <span className="text-blue-400 text-lg">🚀</span>
+                <span className="text-blue-300 font-medium">Webhook Integrations Active</span>
+              </div>
+              <div className="text-sm text-blue-200 space-y-1">
+                {contentSelections
+                  .filter(sel => isPlatformWebhookEnabled(sel.platform))
+                  .reduce((platforms, sel) => {
+                    if (!platforms.includes(sel.platform)) {
+                      platforms.push(sel.platform);
+                    }
+                    return platforms;
+                  }, [] as string[])
+                  .map(platform => (
+                    <div key={platform} className="flex items-center space-x-2">
+                      <span>{getWebhookIcon(platform)}</span>
+                      <span>{platform} content will be generated via webhook integration</span>
+                    </div>
+                  ))
+                }
+              </div>
             </div>
           </div>
         )}
