@@ -2,19 +2,26 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Lightbulb, FileText, Globe, BarChart3, MessageSquare, User, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Lightbulb, FileText, Globe, BarChart3, MessageSquare, User, Settings, LogOut, Users } from "lucide-react";
 import IdeasTab from "./dashboard-tabs/IdeasTab";
 import ContentTab from "./dashboard-tabs/ContentTab";
 import SourcesTab from "./dashboard-tabs/SourcesTab";
 import TrackingTab from "./dashboard-tabs/TrackingTab";
 import PromptsTab from "./dashboard-tabs/PromptsTab";
+import UsersTab from "./dashboard-tabs/UsersTab";
+import UserProfile from "./UserProfile";
+import { useUsers } from "@/hooks/useUsers";
 
 interface DashboardProps {
   onBack: () => void;
 }
 
 const Dashboard = ({ onBack }: DashboardProps) => {
+  const { currentUser, logout } = useUsers();
+  const [activeTab, setActiveTab] = useState("ideas");
+
   const handleSignOut = () => {
+    logout();
     onBack();
   };
 
@@ -45,8 +52,12 @@ const Dashboard = ({ onBack }: DashboardProps) => {
               <User className="h-4 w-4 text-white" />
             </div>
             <div>
-              <p className="text-sm font-medium text-white">Demo User</p>
-              <p className="text-xs text-gray-400">demo@example.com</p>
+              <p className="text-sm font-medium text-white">
+                {currentUser?.name || "Demo User"}
+              </p>
+              <p className="text-xs text-gray-400">
+                {currentUser?.email || "demo@example.com"}
+              </p>
             </div>
           </div>
           <div className="flex space-x-2">
@@ -132,8 +143,8 @@ const Dashboard = ({ onBack }: DashboardProps) => {
           </div>
 
           {/* Tabs */}
-          <Tabs defaultValue="ideas" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-8 bg-white/10 backdrop-blur-sm border-white/20">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-6 mb-8 bg-white/10 backdrop-blur-sm border-white/20">
               <TabsTrigger value="ideas" className="flex items-center space-x-2 text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white">
                 <Lightbulb className="h-4 w-4" />
                 <span>Ideas</span>
@@ -153,6 +164,10 @@ const Dashboard = ({ onBack }: DashboardProps) => {
               <TabsTrigger value="prompts" className="flex items-center space-x-2 text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white">
                 <MessageSquare className="h-4 w-4" />
                 <span>Prompts</span>
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center space-x-2 text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white">
+                <Users className="h-4 w-4" />
+                <span>Users</span>
               </TabsTrigger>
             </TabsList>
 
@@ -174,6 +189,17 @@ const Dashboard = ({ onBack }: DashboardProps) => {
 
             <TabsContent value="prompts">
               <PromptsTab />
+            </TabsContent>
+
+            <TabsContent value="users">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <UsersTab />
+                </div>
+                <div>
+                  <UserProfile />
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </main>
