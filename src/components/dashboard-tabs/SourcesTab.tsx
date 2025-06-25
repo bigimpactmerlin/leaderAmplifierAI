@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Globe, Trash2, RefreshCw, Loader2, Edit, Power } from "lucide-react";
+import { Plus, Globe, Trash2, RefreshCw, Loader2, Edit, Power, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { useSources } from "@/hooks/useSources";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,7 @@ const SourcesTab = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingSource, setEditingSource] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(new Set());
 
   // Form state for detailed source creation
   const [sourceForm, setSourceForm] = useState({
@@ -114,6 +115,23 @@ const SourcesTab = () => {
       source_type: source.source_type || ""
     });
     setIsEditDialogOpen(true);
+  };
+
+  const toggleDescription = (sourceId: number) => {
+    setExpandedDescriptions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sourceId)) {
+        newSet.delete(sourceId);
+      } else {
+        newSet.add(sourceId);
+      }
+      return newSet;
+    });
+  };
+
+  const truncateText = (text: string, maxLength: number = 100) => {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
   const getSourceTypeColor = (type: string | null) => {
@@ -259,54 +277,84 @@ const SourcesTab = () => {
           ) : (
             <div className="space-y-3">
               {sources.map((source) => (
-                <div key={source.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/20 rounded-lg hover:bg-white/10 transition-all duration-200">
-                  <div className="flex items-center space-x-3 flex-1">
-                    <Badge className={getSourceTypeColor(source.source_type)}>
-                      {source.source_type || 'Unknown'}
-                    </Badge>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-white font-medium truncate" title={source.url || ''}>
-                        {source.url || 'No URL'}
-                      </div>
-                      {source.description && (
-                        <div className="text-gray-400 text-sm truncate" title={source.description}>
-                          {source.description}
+                <div key={source.id} className="p-4 bg-white/5 border border-white/20 rounded-lg hover:bg-white/10 transition-all duration-200">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start space-x-3 flex-1 min-w-0">
+                      <Badge className={getSourceTypeColor(source.source_type)}>
+                        {source.source_type || 'Unknown'}
+                      </Badge>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white font-medium break-all" title={source.url || ''}>
+                          {source.url || 'No URL'}
                         </div>
-                      )}
-                      <div className="text-gray-500 text-xs">
-                        Added {formatDate(source.created_at)}
+                        {source.description && (
+                          <div className="mt-2">
+                            <div className="text-gray-400 text-sm">
+                              {expandedDescriptions.has(source.id) 
+                                ? source.description 
+                                : truncateText(source.description, 100)
+                              }
+                            </div>
+                            {source.description.length > 100 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleDescription(source.id)}
+                                className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 p-0 h-auto mt-1"
+                              >
+                                {expandedDescriptions.has(source.id) ? (
+                                  <>
+                                    <ChevronUp className="h-3 w-3 mr-1" />
+                                    Show less
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="h-3 w-3 mr-1" />
+                                    Show more
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                        <div className="text-gray-500 text-xs mt-1">
+                          Added {formatDate(source.created_at)}
+                        </div>
                       </div>
                     </div>
-                    <Badge className={getStatusColor(source.key)}>
-                      {source.key || 'Unknown'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleStatus(source.id)}
-                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
-                      title={`Mark as ${source.key === 'Active' ? 'Inactive' : 'Active'}`}
-                    >
-                      <Power className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditSource(source)}
-                      className="text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/20"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeSource(source.id)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                      <Badge className={getStatusColor(source.key)}>
+                        {source.key || 'Unknown'}
+                      </Badge>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleStatus(source.id)}
+                          className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                          title={`Mark as ${source.key === 'Active' ? 'Inactive' : 'Active'}`}
+                        >
+                          <Power className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditSource(source)}
+                          className="text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/20"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSource(source.id)}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
