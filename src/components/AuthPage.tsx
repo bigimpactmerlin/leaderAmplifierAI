@@ -11,11 +11,9 @@ interface AuthPageProps {
 }
 
 const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const { signIn, signUp, loading } = useAuth();
+  const { signIn, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,16 +22,7 @@ const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
       return;
     }
 
-    if (!isLogin && password !== confirmPassword) {
-      return;
-    }
-
-    let result;
-    if (isLogin) {
-      result = await signIn(email, password);
-    } else {
-      result = await signUp(email, password);
-    }
+    const result = await signIn(email, password);
 
     if (result.data && !result.error) {
       onAuthSuccess();
@@ -48,7 +37,7 @@ const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
             LeaderAmplifierAi
           </CardTitle>
           <p className="text-gray-300">
-            {isLogin ? "Welcome back!" : "Create your account"}
+            Welcome back! Please sign in to continue.
           </p>
         </CardHeader>
         <CardContent>
@@ -80,21 +69,6 @@ const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
               />
             </div>
 
-            {!isLogin && (
-              <div>
-                <Label htmlFor="confirmPassword" className="text-white">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Confirm your password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                  required
-                />
-              </div>
-            )}
-
             <Button
               type="submit"
               disabled={loading}
@@ -103,23 +77,13 @@ const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isLogin ? "Signing in..." : "Creating account..."}
+                  Signing in...
                 </>
               ) : (
-                isLogin ? "Sign In" : "Sign Up"
+                "Sign In"
               )}
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-white hover:text-gray-300 underline"
-              disabled={loading}
-            >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>
