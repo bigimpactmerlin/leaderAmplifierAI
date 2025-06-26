@@ -113,7 +113,7 @@ const ContentTab = () => {
     try {
       // Call LinkedIn webhook for selected content if LinkedIn is in selected platforms
       if (selectedPlatforms.includes('linkedin')) {
-        const linkedinWebhookUrl = "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje";
+        const linkedinWebhookUrl = "https://hook.eu2.make.com/xaikyfjrn4tbhuut7klil7e3f2slqt8w";
         
         for (const contentId of selectedContent) {
           try {
@@ -288,7 +288,7 @@ const ContentTab = () => {
     try {
       // Call appropriate webhook based on platform
       if (platform === 'linkedin') {
-        const linkedinWebhookUrl = "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje";
+        const linkedinWebhookUrl = "https://hook.eu2.make.com/xaikyfjrn4tbhuut7klil7e3f2slqt8w";
         
         await fetch(linkedinWebhookUrl, {
           method: "POST",
