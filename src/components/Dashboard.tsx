@@ -28,7 +28,8 @@ const Dashboard = ({ onBack }: DashboardProps) => {
 
   const handleSignOut = () => {
     logout();
-    onBack();
+    // Since we removed the login page, just reload the page
+    window.location.reload();
   };
 
   // Calculate stats

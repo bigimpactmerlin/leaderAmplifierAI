@@ -10,13 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Edit, Save, X, Loader2 } from "lucide-react";
 
 const UserProfile = () => {
-  const { currentUser, updateUser, loginUserByEmail, logout } = useUsers();
+  const { currentUser, updateUser, logout } = useUsers();
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Form state for editing user
   const [userForm, setUserForm] = useState({
@@ -71,28 +68,6 @@ const UserProfile = () => {
     }
   };
 
-  const handleLogin = async () => {
-    if (!loginEmail.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an email address",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoggingIn(true);
-    try {
-      await loginUserByEmail(loginEmail.trim());
-      setLoginEmail("");
-      setIsLoginDialogOpen(false);
-    } catch (error) {
-      // Error handling is done in the hook
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
   const handleEditClick = () => {
     if (currentUser) {
       setUserForm({
@@ -106,6 +81,12 @@ const UserProfile = () => {
       });
       setIsEditDialogOpen(true);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    // Since we removed the login page, just reload the page
+    window.location.reload();
   };
 
   // Helper function to extract domain from URL
@@ -131,46 +112,7 @@ const UserProfile = () => {
           <div className="text-center py-8">
             <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-300 mb-4">No user logged in</p>
-            <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  Login with Email
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-gray-900 border-gray-700">
-                <DialogHeader>
-                  <DialogTitle className="text-white">Login</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="login-email" className="text-white">Email Address</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                      onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                    />
-                  </div>
-                  <Button 
-                    onClick={handleLogin}
-                    disabled={isLoggingIn}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    {isLoggingIn ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Logging in...
-                      </>
-                    ) : (
-                      "Login"
-                    )}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <p className="text-gray-400 text-sm">Demo mode - using sample data</p>
           </div>
         </CardContent>
       </Card>
@@ -198,7 +140,7 @@ const UserProfile = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={logout}
+              onClick={handleLogout}
               className="bg-red-500/20 border-red-400/30 text-red-300 hover:bg-red-500/30"
             >
               <X className="h-4 w-4 mr-2" />
