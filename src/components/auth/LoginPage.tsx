@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useUsers } from "@/hooks/useUsers";
-import { Loader2, User, Mail, Phone, Globe, Linkedin, Facebook, Instagram, Twitter, ArrowRight } from "lucide-react";
+import { Loader2, User, Mail, Globe, Linkedin, Facebook, Instagram, Twitter, ArrowRight } from "lucide-react";
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
@@ -20,8 +20,7 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   // Sign In State
   const [signInData, setSignInData] = useState({
     email: "",
-    name: "",
-    phone: ""
+    name: ""
   });
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -29,7 +28,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   const [signUpData, setSignUpData] = useState({
     name: "",
     email: "",
-    phone: "",
     domain: "",
     linkedin_url: "",
     facebook_url: "",
@@ -52,11 +50,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-  };
-
-  const validatePhone = (phone: string) => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
   };
 
   const validateUrl = (url: string) => {
@@ -98,15 +91,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       return;
     }
 
-    if (signInData.phone && !validatePhone(signInData.phone)) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a valid phone number",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsSigningIn(true);
     try {
       await loginUserByEmail(signInData.email.trim());
@@ -142,15 +126,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       toast({
         title: "Validation Error",
         description: "Please enter a valid email address",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (signUpData.phone && !validatePhone(signUpData.phone)) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a valid phone number",
         variant: "destructive"
       });
       return;
@@ -291,21 +266,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="signin-phone" className="text-white flex items-center">
-                    <Phone className="h-4 w-4 mr-2" />
-                    Phone Number (Optional)
-                  </Label>
-                  <Input
-                    id="signin-phone"
-                    type="tel"
-                    placeholder="+1 (555) 123-4567"
-                    value={signInData.phone}
-                    onChange={(e) => setSignInData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                  />
-                </div>
-
                 <Button 
                   onClick={handleSignIn}
                   disabled={isSigningIn}
@@ -353,21 +313,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
                       placeholder="your.email@example.com"
                       value={signUpData.email}
                       onChange={(e) => setSignUpData(prev => ({ ...prev, email: e.target.value }))}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="signup-phone" className="text-white flex items-center">
-                      <Phone className="h-4 w-4 mr-2" />
-                      Phone Number (Optional)
-                    </Label>
-                    <Input
-                      id="signup-phone"
-                      type="tel"
-                      placeholder="+1 (555) 123-4567"
-                      value={signUpData.phone}
-                      onChange={(e) => setSignUpData(prev => ({ ...prev, phone: e.target.value }))}
                       className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                     />
                   </div>

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUsers } from "@/hooks/useUsers";
 import { useToast } from "@/hooks/use-toast";
-import { User, Edit, Save, X, Loader2, Phone } from "lucide-react";
+import { User, Edit, Save, X, Loader2 } from "lucide-react";
 
 const UserProfile = () => {
   const { currentUser, updateUser, loginUserByEmail, logout } = useUsers();
@@ -22,7 +22,6 @@ const UserProfile = () => {
   const [userForm, setUserForm] = useState({
     name: currentUser?.name || "",
     email: currentUser?.email || "",
-    phone: currentUser?.phone || "",
     domain: currentUser?.domain || "",
     linkedin_url: currentUser?.linkedin_url || "",
     facebook_url: currentUser?.facebook_url || "",
@@ -58,7 +57,6 @@ const UserProfile = () => {
       await updateUser(currentUser.id, {
         name: userForm.name.trim(),
         email: userForm.email.trim(),
-        phone: userForm.phone.trim() || null,
         domain: userForm.domain || null,
         linkedin_url: userForm.linkedin_url.trim() || null,
         facebook_url: userForm.facebook_url.trim() || null,
@@ -100,7 +98,6 @@ const UserProfile = () => {
       setUserForm({
         name: currentUser.name || "",
         email: currentUser.email || "",
-        phone: currentUser.phone || "",
         domain: currentUser.domain || "",
         linkedin_url: currentUser.linkedin_url || "",
         facebook_url: currentUser.facebook_url || "",
@@ -223,10 +220,6 @@ const UserProfile = () => {
               <p className="text-gray-300 mt-1">{currentUser.email || 'Not set'}</p>
             </div>
             <div>
-              <Label className="text-white text-sm font-medium">Phone</Label>
-              <p className="text-gray-300 mt-1">{currentUser.phone || 'Not set'}</p>
-            </div>
-            <div>
               <Label className="text-white text-sm font-medium">Domain</Label>
               <p className="text-gray-300 mt-1">{currentUser.domain || 'Not set'}</p>
             </div>
@@ -302,21 +295,6 @@ const UserProfile = () => {
                     className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="phone" className="text-white flex items-center">
-                  <Phone className="h-4 w-4 mr-2" />
-                  Phone Number
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1 (555) 123-4567"
-                  value={userForm.phone}
-                  onChange={(e) => setUserForm(prev => ({ ...prev, phone: e.target.value }))}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                />
               </div>
 
               <div>

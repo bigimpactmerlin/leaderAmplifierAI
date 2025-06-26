@@ -48,7 +48,6 @@ export interface Database {
           created_at: string
           name: string | null
           email: string | null
-          phone: string | null
           domain: string | null
           linkedin_url: string | null
           facebook_url: string | null
@@ -60,7 +59,6 @@ export interface Database {
           created_at?: string
           name?: string | null
           email?: string | null
-          phone?: string | null
           domain?: string | null
           linkedin_url?: string | null
           facebook_url?: string | null
@@ -72,7 +70,6 @@ export interface Database {
           created_at?: string
           name?: string | null
           email?: string | null
-          phone?: string | null
           domain?: string | null
           linkedin_url?: string | null
           facebook_url?: string | null
