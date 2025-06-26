@@ -108,6 +108,16 @@ const UserProfile = () => {
     }
   };
 
+  // Helper function to extract domain from URL
+  const extractDomain = (url: string) => {
+    try {
+      const domain = new URL(url).hostname;
+      return domain.replace('www.', '');
+    } catch {
+      return url;
+    }
+  };
+
   if (!currentUser) {
     return (
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
@@ -233,16 +243,17 @@ const UserProfile = () => {
               ].map(({ key, label, icon }) => (
                 <div key={key} className="flex items-center space-x-3">
                   <span className="text-lg">{icon}</span>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <Label className="text-white text-sm">{label}</Label>
                     {currentUser[key as keyof typeof currentUser] ? (
                       <a 
                         href={currentUser[key as keyof typeof currentUser] as string}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 text-sm block truncate"
+                        className="text-blue-400 hover:text-blue-300 text-xs block truncate max-w-[120px]"
+                        title={currentUser[key as keyof typeof currentUser] as string}
                       >
-                        {currentUser[key as keyof typeof currentUser] as string}
+                        {extractDomain(currentUser[key as keyof typeof currentUser] as string)}
                       </a>
                     ) : (
                       <p className="text-gray-400 text-sm">Not set</p>
