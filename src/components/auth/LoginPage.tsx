@@ -19,8 +19,7 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   
   // Sign In State
   const [signInData, setSignInData] = useState({
-    email: "",
-    name: ""
+    email: ""
   });
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -77,15 +76,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       toast({
         title: "Validation Error",
         description: "Please enter a valid email address",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!signInData.name.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Name is required",
         variant: "destructive"
       });
       return;
@@ -249,21 +239,11 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
                     value={signInData.email}
                     onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
                     className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSignIn()}
                   />
-                </div>
-
-                <div>
-                  <Label htmlFor="signin-name" className="text-white flex items-center">
-                    <User className="h-4 w-4 mr-2" />
-                    Full Name *
-                  </Label>
-                  <Input
-                    id="signin-name"
-                    placeholder="Your full name"
-                    value={signInData.name}
-                    onChange={(e) => setSignInData(prev => ({ ...prev, name: e.target.value }))}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Enter your registered email address to sign in
+                  </p>
                 </div>
 
                 <Button 

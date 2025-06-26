@@ -14,13 +14,17 @@ const Index = () => {
   // Update app state based on authentication status
   useEffect(() => {
     if (isAuthenticated()) {
+      // If user is authenticated and we're on login page, go to dashboard
       if (appState === "login") {
         setAppState("dashboard");
       }
     } else {
-      setAppState("login");
+      // If user is not authenticated, go to login page
+      if (appState !== "login") {
+        setAppState("login");
+      }
     }
-  }, [currentUser, isAuthenticated]);
+  }, [currentUser, isAuthenticated, appState]);
 
   const handleGetStarted = () => {
     if (isAuthenticated()) {
