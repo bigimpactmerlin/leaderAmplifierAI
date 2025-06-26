@@ -136,7 +136,7 @@ const ContentTab = () => {
 
       // Call Facebook webhook for selected content if Facebook is in selected platforms
       if (selectedPlatforms.includes('facebook')) {
-        const facebookWebhookUrl = "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje";
+        const facebookWebhookUrl = "https://hook.eu2.make.com/eeia98ktnu8vth9epzmv89ym4a6eeyi3";
         
         for (const contentId of selectedContent) {
           try {
@@ -302,7 +302,7 @@ const ContentTab = () => {
         });
         console.log(`LinkedIn webhook called for content ID: ${contentId}`);
       } else if (platform === 'facebook') {
-        const facebookWebhookUrl = "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje";
+        const facebookWebhookUrl = "https://hook.eu2.make.com/eeia98ktnu8vth9epzmv89ym4a6eeyi3";
         
         await fetch(facebookWebhookUrl, {
           method: "POST",
@@ -555,9 +555,8 @@ const ContentTab = () => {
                   </TableCell>
                   <TableCell className="text-white font-medium max-w-xs">
                     <div 
-                      className="truncate cursor-pointer hover:text-blue-300" 
+                      className="truncate" 
                       title={item.content || ''}
-                      onClick={() => handleViewContent(item)}
                     >
                       {item.content || 'No content'}
                     </div>
