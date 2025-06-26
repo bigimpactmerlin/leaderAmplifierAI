@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useContents } from "@/hooks/useContents";
-import { Loader2, Plus, RefreshCw, Trash2, Eye, ExternalLink, Edit, Save } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Trash2, Eye, ExternalLink, Edit, Save, Send } from "lucide-react";
 
 const ContentTab = () => {
   const { toast } = useToast();
@@ -34,6 +34,7 @@ const ContentTab = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // Form state for creating new content
   const [newContent, setNewContent] = useState({
@@ -105,10 +106,11 @@ const ContentTab = () => {
       return;
     }
 
+    setIsPublishing(true);
     try {
       // Call LinkedIn webhook for selected content if LinkedIn is in selected platforms
       if (selectedPlatforms.includes('linkedin')) {
-        const linkedinWebhookUrl = "https://hook.eu2.make.com/xaikyfjrn4tbhuut7klil7e3f2slqt8w";
+        const linkedinWebhookUrl = "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje";
         
         for (const contentId of selectedContent) {
           try {
@@ -129,11 +131,36 @@ const ContentTab = () => {
         }
       }
 
+      // Call Facebook webhook for selected content if Facebook is in selected platforms
+      if (selectedPlatforms.includes('facebook')) {
+        const facebookWebhookUrl = "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje";
+        
+        for (const contentId of selectedContent) {
+          try {
+            await fetch(facebookWebhookUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              mode: "no-cors",
+              body: JSON.stringify({
+                content_id: contentId
+              }),
+            });
+            console.log(`Facebook webhook called for content ID: ${contentId}`);
+          } catch (error) {
+            console.error(`Error calling Facebook webhook for content ${contentId}:`, error);
+          }
+        }
+      }
+
       await publishContent(selectedContent, selectedPlatforms);
       setSelectedContent([]);
       setSelectedPlatforms([]);
     } catch (error) {
       // Error handling is done in the hook
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -215,6 +242,58 @@ const ContentTab = () => {
       // Error handling is done in the hook
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handlePublishSingle = async (contentId: number, platform: string) => {
+    setIsPublishing(true);
+    try {
+      // Call appropriate webhook based on platform
+      if (platform === 'linkedin') {
+        const linkedinWebhookUrl = "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje";
+        
+        await fetch(linkedinWebhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          mode: "no-cors",
+          body: JSON.stringify({
+            content_id: contentId
+          }),
+        });
+        console.log(`LinkedIn webhook called for content ID: ${contentId}`);
+      } else if (platform === 'facebook') {
+        const facebookWebhookUrl = "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje";
+        
+        await fetch(facebookWebhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          mode: "no-cors",
+          body: JSON.stringify({
+            content_id: contentId
+          }),
+        });
+        console.log(`Facebook webhook called for content ID: ${contentId}`);
+      }
+
+      await publishContent([contentId], [platform]);
+      
+      toast({
+        title: "Success",
+        description: `Content published to ${platform}`
+      });
+    } catch (error) {
+      console.error(`Error publishing to ${platform}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to publish to ${platform}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -380,7 +459,7 @@ const ContentTab = () => {
                       }`}
                     >
                       {platform.label}
-                      {platform.value === 'linkedin' && selectedPlatforms.includes(platform.value) && ' 🔗'}
+                      {(platform.value === 'linkedin' || platform.value === 'facebook') && selectedPlatforms.includes(platform.value) && ' 🔗'}
                     </button>
                   ))}
                 </div>
@@ -388,10 +467,17 @@ const ContentTab = () => {
               
               <Button 
                 onClick={handlePublishSelected}
-                disabled={selectedPlatforms.length === 0}
+                disabled={selectedPlatforms.length === 0 || isPublishing}
                 className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50"
               >
-                Publish to Selected Platforms
+                {isPublishing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Publishing...
+                  </>
+                ) : (
+                  "Publish to Selected Platforms"
+                )}
               </Button>
             </div>
           )}
@@ -430,7 +516,11 @@ const ContentTab = () => {
                     {item.id}
                   </TableCell>
                   <TableCell className="text-white font-medium max-w-xs">
-                    <div className="truncate" title={item.content || ''}>
+                    <div 
+                      className="truncate cursor-pointer hover:text-blue-300" 
+                      title={item.content || ''}
+                      onClick={() => handleViewContent(item)}
+                    >
                       {item.content || 'No content'}
                     </div>
                   </TableCell>
@@ -443,7 +533,7 @@ const ContentTab = () => {
                   </TableCell>
                   <TableCell className="text-gray-300">{formatDate(item.created_at)}</TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -460,12 +550,24 @@ const ContentTab = () => {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
+                      {item.platform && (item.platform === 'linkedin' || item.platform === 'facebook') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePublishSingle(item.id, item.platform!)}
+                          disabled={isPublishing}
+                          className="text-green-400 hover:text-green-300 hover:bg-green-500/20"
+                          title={`Publish to ${capitalizeFirst(item.platform)}`}
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      )}
                       {item.content_url && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => window.open(item.content_url!, '_blank')}
-                          className="text-green-400 hover:text-green-300 hover:bg-green-500/20"
+                          className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/20"
                         >
                           <ExternalLink className="h-4 w-4" />
                         </Button>
@@ -535,6 +637,31 @@ const ContentTab = () => {
                   <Label className="text-white">Created</Label>
                   <p className="text-gray-300">{formatDate(viewingContent.created_at)}</p>
                 </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      setIsViewDialogOpen(false);
+                      handleEditContent(viewingContent);
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Content
+                  </Button>
+                  {viewingContent.platform && (viewingContent.platform === 'linkedin' || viewingContent.platform === 'facebook') && (
+                    <Button
+                      onClick={() => {
+                        setIsViewDialogOpen(false);
+                        handlePublishSingle(viewingContent.id, viewingContent.platform);
+                      }}
+                      disabled={isPublishing}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Publish to {capitalizeFirst(viewingContent.platform)}
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </DialogContent>
@@ -588,6 +715,22 @@ const ContentTab = () => {
                       </>
                     )}
                   </Button>
+                  {editingContent.platform && (editingContent.platform === 'linkedin' || editingContent.platform === 'facebook') && (
+                    <Button
+                      onClick={async () => {
+                        await handleUpdateContent();
+                        if (!isUpdating) {
+                          setIsEditDialogOpen(false);
+                          handlePublishSingle(editingContent.id, editingContent.platform);
+                        }
+                      }}
+                      disabled={isUpdating || isPublishing}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Save & Publish
+                    </Button>
+                  )}
                   <Button 
                     onClick={() => setIsEditDialogOpen(false)}
                     variant="outline"
