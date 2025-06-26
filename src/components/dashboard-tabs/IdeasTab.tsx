@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useIdeas } from "@/hooks/useIdeas";
-import { ChevronDown, Plus, Loader2, Trash2, RefreshCw, Edit } from "lucide-react";
+import { ChevronDown, Plus, Loader2, Trash2, RefreshCw, Edit, Save, Eye } from "lucide-react";
 
 interface ContentSelection {
   ideaId: number;
@@ -24,7 +24,9 @@ const IdeasTab = () => {
   const [contentSelections, setContentSelections] = useState<ContentSelection[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [editingIdea, setEditingIdea] = useState<any>(null);
+  const [viewingIdea, setViewingIdea] = useState<any>(null);
   const [newIdeaContent, setNewIdeaContent] = useState("");
   const [editIdeaContent, setEditIdeaContent] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -272,6 +274,11 @@ const IdeasTab = () => {
     }
   };
 
+  const handleViewIdea = (idea: any) => {
+    setViewingIdea(idea);
+    setIsViewDialogOpen(true);
+  };
+
   const handleEditIdea = (idea: any) => {
     setEditingIdea(idea);
     setEditIdeaContent(idea.content || "");
@@ -465,7 +472,14 @@ const IdeasTab = () => {
                     {idea.id}
                   </TableCell>
                   <TableCell className="text-white font-medium max-w-xs">
-                    <div className="truncate" title={idea.content || ''}>
+                    <div 
+                      className="truncate cursor-pointer hover:text-blue-300" 
+                      title={idea.content || ''}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewIdea(idea);
+                      }}
+                    >
                       {idea.content || 'No content'}
                     </div>
                   </TableCell>
@@ -539,8 +553,16 @@ const IdeasTab = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEditIdea(idea)}
+                        onClick={() => handleViewIdea(idea)}
                         className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditIdea(idea)}
+                        className="text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/20"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -560,6 +582,49 @@ const IdeasTab = () => {
           </Table>
         )}
 
+        {/* View Idea Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="bg-gray-900 border-gray-700 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">View Idea</DialogTitle>
+            </DialogHeader>
+            {viewingIdea && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-white">ID</Label>
+                  <p className="text-gray-300">{viewingIdea.id}</p>
+                </div>
+                <div>
+                  <Label className="text-white">Status</Label>
+                  <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(viewingIdea.status)}`}>
+                    {viewingIdea.status || 'new'}
+                  </span>
+                </div>
+                <div>
+                  <Label className="text-white">Priority Score</Label>
+                  <p className="text-gray-300">{viewingIdea.priority_score ? (viewingIdea.priority_score * 100).toFixed(0) : '50'}%</p>
+                </div>
+                <div>
+                  <Label className="text-white">Content</Label>
+                  <div className="bg-white/5 border border-white/20 rounded-lg p-3 text-gray-300 max-h-60 overflow-y-auto">
+                    {viewingIdea.content || 'No content'}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-white">Created</Label>
+                  <p className="text-gray-300">{formatDate(viewingIdea.created_at)}</p>
+                </div>
+                {viewingIdea.used_at && (
+                  <div>
+                    <Label className="text-white">Used At</Label>
+                    <p className="text-gray-300">{formatDate(viewingIdea.used_at)}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Edit Idea Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="bg-gray-900 border-gray-700 max-w-2xl">
@@ -567,6 +632,10 @@ const IdeasTab = () => {
               <DialogTitle className="text-white">Edit Idea</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              <div>
+                <Label className="text-white">ID</Label>
+                <p className="text-gray-300">{editingIdea?.id}</p>
+              </div>
               <div>
                 <Label htmlFor="edit-content" className="text-white">Idea Content</Label>
                 <Textarea
@@ -586,10 +655,13 @@ const IdeasTab = () => {
                   {isUpdating ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Updating...
+                      Saving...
                     </>
                   ) : (
-                    "Update Idea"
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
                   )}
                 </Button>
                 <Button 

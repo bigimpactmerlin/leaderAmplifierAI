@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Globe, Trash2, RefreshCw, Loader2, Edit, Power, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { useSources } from "@/hooks/useSources";
@@ -22,6 +23,7 @@ const SourcesTab = () => {
   } = useSources();
 
   const [newSource, setNewSource] = useState("");
+  const [selectedSourceType, setSelectedSourceType] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingSource, setEditingSource] = useState<any>(null);
@@ -35,6 +37,18 @@ const SourcesTab = () => {
     source_type: ""
   });
 
+  // Predefined source types
+  const sourceTypes = [
+    { value: "Website", label: "Website", icon: "🌐", placeholder: "https://example.com" },
+    { value: "RSS Feed", label: "RSS Feed", icon: "📡", placeholder: "https://example.com/feed.xml" },
+    { value: "Social Media", label: "Social Media", icon: "📱", placeholder: "@username or profile URL" },
+    { value: "Blog", label: "Blog", icon: "📝", placeholder: "https://blog.example.com" },
+    { value: "News Site", label: "News Site", icon: "📰", placeholder: "https://news.example.com" },
+    { value: "YouTube Channel", label: "YouTube Channel", icon: "📺", placeholder: "https://youtube.com/@channel" },
+    { value: "Podcast", label: "Podcast", icon: "🎙️", placeholder: "https://podcast.example.com" },
+    { value: "Newsletter", label: "Newsletter", icon: "📧", placeholder: "Newsletter subscription URL" }
+  ];
+
   const addSource = async () => {
     if (!newSource.trim()) {
       toast({
@@ -45,14 +59,25 @@ const SourcesTab = () => {
       return;
     }
 
+    if (!selectedSourceType) {
+      toast({
+        title: "Error",
+        description: "Please select a source type",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsCreating(true);
     try {
       await createSource({
         url: newSource.trim(),
-        description: `Added via quick add`,
+        description: `${selectedSourceType} source`,
+        source_type: selectedSourceType,
         key: 'Active'
       });
       setNewSource("");
+      setSelectedSourceType("");
     } catch (error) {
       // Error handling is done in the hook
     } finally {
@@ -70,11 +95,21 @@ const SourcesTab = () => {
       return;
     }
 
+    if (!sourceForm.source_type) {
+      toast({
+        title: "Error",
+        description: "Please select a source type",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsCreating(true);
     try {
       await createSource({
         url: sourceForm.url.trim(),
-        description: sourceForm.description.trim() || undefined,
+        description: sourceForm.description.trim() || `${sourceForm.source_type} source`,
+        source_type: sourceForm.source_type,
         key: 'Active'
       });
       
@@ -135,12 +170,22 @@ const SourcesTab = () => {
   };
 
   const getSourceTypeColor = (type: string | null) => {
-    switch (type) {
-      case "Website": return "bg-blue-600 text-white";
-      case "RSS Feed": return "bg-green-600 text-white";
-      case "Social Media": return "bg-purple-600 text-white";
-      default: return "bg-gray-600 text-white";
-    }
+    const colors = {
+      "Website": "bg-blue-600 text-white",
+      "RSS Feed": "bg-green-600 text-white",
+      "Social Media": "bg-purple-600 text-white",
+      "Blog": "bg-orange-600 text-white",
+      "News Site": "bg-red-600 text-white",
+      "YouTube Channel": "bg-red-500 text-white",
+      "Podcast": "bg-indigo-600 text-white",
+      "Newsletter": "bg-yellow-600 text-white"
+    };
+    return colors[type as keyof typeof colors] || "bg-gray-600 text-white";
+  };
+
+  const getSourceTypeIcon = (type: string | null) => {
+    const sourceType = sourceTypes.find(st => st.value === type);
+    return sourceType?.icon || "🔗";
   };
 
   const getStatusColor = (status: string | null) => {
@@ -181,27 +226,58 @@ const SourcesTab = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {/* Quick Add Source */}
-          <div className="flex space-x-2">
-            <Input
-              placeholder="Enter website URL, RSS feed, or social handle..."
-              value={newSource}
-              onChange={(e) => setNewSource(e.target.value)}
-              className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-              onKeyDown={(e) => e.key === 'Enter' && addSource()}
-            />
-            <Button 
-              onClick={addSource} 
-              disabled={isCreating}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-            >
-              {isCreating ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4 mr-2" />
-              )}
-              Add Source
-            </Button>
+          {/* Quick Add Source with Dropdown */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <Select value={selectedSourceType} onValueChange={setSelectedSourceType}>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Select source type" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  {sourceTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value} className="text-white hover:bg-gray-700">
+                      <div className="flex items-center space-x-2">
+                        <span>{type.icon}</span>
+                        <span>{type.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Input
+                placeholder={
+                  selectedSourceType 
+                    ? sourceTypes.find(t => t.value === selectedSourceType)?.placeholder || "Enter URL..."
+                    : "Select type first..."
+                }
+                value={newSource}
+                onChange={(e) => setNewSource(e.target.value)}
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                onKeyDown={(e) => e.key === 'Enter' && addSource()}
+                disabled={!selectedSourceType}
+              />
+              
+              <Button 
+                onClick={addSource} 
+                disabled={isCreating || !selectedSourceType || !newSource.trim()}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+              >
+                {isCreating ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4 mr-2" />
+                )}
+                Add Source
+              </Button>
+            </div>
+            
+            {selectedSourceType && (
+              <div className="text-sm text-gray-400 flex items-center space-x-2">
+                <span>{getSourceTypeIcon(selectedSourceType)}</span>
+                <span>Adding {selectedSourceType} source</span>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -219,10 +295,33 @@ const SourcesTab = () => {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
+                    <Label htmlFor="source-type" className="text-white">Source Type *</Label>
+                    <Select value={sourceForm.source_type} onValueChange={(value) => setSourceForm(prev => ({ ...prev, source_type: value }))}>
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                        <SelectValue placeholder="Select source type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-700">
+                        {sourceTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value} className="text-white hover:bg-gray-700">
+                            <div className="flex items-center space-x-2">
+                              <span>{type.icon}</span>
+                              <span>{type.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
                     <Label htmlFor="url" className="text-white">URL *</Label>
                     <Input
                       id="url"
-                      placeholder="https://example.com or @username"
+                      placeholder={
+                        sourceForm.source_type 
+                          ? sourceTypes.find(t => t.value === sourceForm.source_type)?.placeholder || "Enter URL..."
+                          : "Select source type first..."
+                      }
                       value={sourceForm.url}
                       onChange={(e) => setSourceForm(prev => ({ ...prev, url: e.target.value }))}
                       className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
@@ -280,9 +379,12 @@ const SourcesTab = () => {
                 <div key={source.id} className="p-4 bg-white/5 border border-white/20 rounded-lg hover:bg-white/10 transition-all duration-200">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start space-x-3 flex-1 min-w-0">
-                      <Badge className={getSourceTypeColor(source.source_type)}>
-                        {source.source_type || 'Unknown'}
-                      </Badge>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg">{getSourceTypeIcon(source.source_type)}</span>
+                        <Badge className={getSourceTypeColor(source.source_type)}>
+                          {source.source_type || 'Unknown'}
+                        </Badge>
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-medium break-all" title={source.url || ''}>
                           {source.url || 'No URL'}
@@ -369,6 +471,25 @@ const SourcesTab = () => {
               <DialogTitle className="text-white">Edit Source</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-source-type" className="text-white">Source Type *</Label>
+                <Select value={sourceForm.source_type} onValueChange={(value) => setSourceForm(prev => ({ ...prev, source_type: value }))}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Select source type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700">
+                    {sourceTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value} className="text-white hover:bg-gray-700">
+                        <div className="flex items-center space-x-2">
+                          <span>{type.icon}</span>
+                          <span>{type.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div>
                 <Label htmlFor="edit-url" className="text-white">URL *</Label>
                 <Input
