@@ -15,7 +15,7 @@ interface LoginPageProps {
 
 const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   const { toast } = useToast();
-  const { loginUserByEmailAndName, createUser } = useUsers();
+  const { loginUserByEmail, createUser } = useUsers();
   
   // Sign In State
   const [signInData, setSignInData] = useState({
@@ -73,15 +73,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       return;
     }
 
-    if (!signInData.name.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Full name is required",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (!validateEmail(signInData.email)) {
       toast({
         title: "Validation Error",
@@ -91,10 +82,18 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       return;
     }
 
+    if (!signInData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Name is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSigningIn(true);
     try {
-      await loginUserByEmailAndName(signInData.email.trim(), signInData.name.trim());
-      // Call onLoginSuccess after successful login
+      await loginUserByEmail(signInData.email.trim());
       onLoginSuccess();
     } catch (error) {
       // Error handling is done in the hook
@@ -201,7 +200,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
         description: "Account created successfully. You are now logged in.",
       });
 
-      // Call onLoginSuccess after successful signup
       onLoginSuccess();
     } catch (error) {
       // Error handling is done in the hook
@@ -240,20 +238,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
               {/* Sign In Tab */}
               <TabsContent value="signin" className="space-y-4">
                 <div>
-                  <Label htmlFor="signin-name" className="text-white flex items-center">
-                    <User className="h-4 w-4 mr-2" />
-                    Full Name *
-                  </Label>
-                  <Input
-                    id="signin-name"
-                    placeholder="Your full name"
-                    value={signInData.name}
-                    onChange={(e) => setSignInData(prev => ({ ...prev, name: e.target.value }))}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                  />
-                </div>
-
-                <div>
                   <Label htmlFor="signin-email" className="text-white flex items-center">
                     <Mail className="h-4 w-4 mr-2" />
                     Email Address *
@@ -265,11 +249,21 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
                     value={signInData.email}
                     onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
                     className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                    onKeyDown={(e) => e.key === 'Enter' && handleSignIn()}
                   />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Enter your registered name and email to sign in
-                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="signin-name" className="text-white flex items-center">
+                    <User className="h-4 w-4 mr-2" />
+                    Full Name *
+                  </Label>
+                  <Input
+                    id="signin-name"
+                    placeholder="Your full name"
+                    value={signInData.name}
+                    onChange={(e) => setSignInData(prev => ({ ...prev, name: e.target.value }))}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  />
                 </div>
 
                 <Button 
