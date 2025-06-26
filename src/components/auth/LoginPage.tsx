@@ -15,7 +15,7 @@ interface LoginPageProps {
 
 const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   const { toast } = useToast();
-  const { loginUserByEmail, createUser } = useUsers();
+  const { loginUserByEmailAndName, createUser } = useUsers();
   
   // Sign In State
   const [signInData, setSignInData] = useState({
@@ -93,7 +93,7 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
 
     setIsSigningIn(true);
     try {
-      await loginUserByEmail(signInData.email.trim());
+      await loginUserByEmailAndName(signInData.email.trim(), signInData.name.trim());
       onLoginSuccess();
     } catch (error) {
       // Error handling is done in the hook

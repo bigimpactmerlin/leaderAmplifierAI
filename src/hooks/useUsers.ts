@@ -201,7 +201,7 @@ export function useUsers() {
     }
   }
 
-  // Login user by email (simplified - no password required as requested)
+  // Login user by email only (simplified - no password required as requested)
   const loginUserByEmail = async (email: string) => {
     try {
       const { data, error } = await supabase
@@ -230,6 +230,43 @@ export function useUsers() {
       console.error('Error logging in user:', err)
       toast({
         title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      })
+      throw err
+    }
+  }
+
+  // Login user by email and name (enhanced authentication)
+  const loginUserByEmailAndName = async (email: string, name: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('name', name)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('No user found with this email and name combination. Please check your credentials or sign up.')
+        }
+        throw error
+      }
+
+      if (data) {
+        setCurrentUser(data)
+        toast({
+          title: "Success",
+          description: `Welcome back, ${data.name}!`
+        })
+        return data
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Invalid credentials'
+      console.error('Error logging in user:', err)
+      toast({
+        title: "Authentication Failed",
         description: errorMessage,
         variant: "destructive"
       })
@@ -275,6 +312,7 @@ export function useUsers() {
     deleteUser,
     setCurrentUserById,
     loginUserByEmail,
+    loginUserByEmailAndName,
     logout,
     isAuthenticated
   }
