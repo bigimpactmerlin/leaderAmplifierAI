@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,8 @@ const ContentTab = () => {
   const [viewingContent, setViewingContent] = useState<any>(null);
   const [editingContent, setEditingContent] = useState<any>(null);
   const [editContentText, setEditContentText] = useState("");
+  const [editContentTitle, setEditContentTitle] = useState("");
+  const [editContentDescription, setEditContentDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -215,14 +218,47 @@ const ContentTab = () => {
   const handleEditContent = (content: any) => {
     setEditingContent(content);
     setEditContentText(content.content || "");
+    
+    // Extract title and description from content if they exist
+    const contentText = content.content || "";
+    const lines = contentText.split('\n');
+    if (lines.length > 1) {
+      setEditContentTitle(lines[0]);
+      setEditContentDescription(lines.slice(1).join('\n'));
+    } else {
+      setEditContentTitle("");
+      setEditContentDescription(contentText);
+    }
     setIsEditDialogOpen(true);
   };
 
   const handleUpdateContent = async () => {
-    if (!editingContent || !editContentText.trim()) {
+    if (!editingContent) {
       toast({
         title: "Error",
-        description: "Please enter content text",
+        description: "No content selected for editing",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Combine title and description into content
+    let combinedContent = "";
+    if (editContentTitle.trim()) {
+      combinedContent = editContentTitle.trim();
+      if (editContentDescription.trim()) {
+        combinedContent += '\n' + editContentDescription.trim();
+      }
+    } else if (editContentDescription.trim()) {
+      combinedContent = editContentDescription.trim();
+    } else if (editContentText.trim()) {
+      combinedContent = editContentText.trim();
+    }
+
+    if (!combinedContent) {
+      toast({
+        title: "Error",
+        description: "Please enter some content",
         variant: "destructive"
       });
       return;
@@ -232,10 +268,12 @@ const ContentTab = () => {
     
     try {
       await updateContent(editingContent.id, {
-        content: editContentText
+        content: combinedContent
       });
 
       setEditContentText("");
+      setEditContentTitle("");
+      setEditContentDescription("");
       setEditingContent(null);
       setIsEditDialogOpen(false);
     } catch (error) {
@@ -687,16 +725,43 @@ const ContentTab = () => {
                   <Label className="text-white">Type</Label>
                   <p className="text-gray-300">{capitalizeFirst(editingContent.type)}</p>
                 </div>
+                
                 <div>
-                  <Label htmlFor="edit-content-text" className="text-white">Content</Label>
-                  <Textarea
-                    id="edit-content-text"
-                    placeholder="Enter your content..."
-                    value={editContentText}
-                    onChange={(e) => setEditContentText(e.target.value)}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[150px]"
+                  <Label htmlFor="edit-content-title" className="text-white">Title (Optional)</Label>
+                  <Input
+                    id="edit-content-title"
+                    placeholder="Enter a title for your content..."
+                    value={editContentTitle}
+                    onChange={(e) => setEditContentTitle(e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
                 </div>
+                
+                <div>
+                  <Label htmlFor="edit-content-description" className="text-white">Description</Label>
+                  <Textarea
+                    id="edit-content-description"
+                    placeholder="Enter the main content/description..."
+                    value={editContentDescription}
+                    onChange={(e) => setEditContentDescription(e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[120px]"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit-content-text" className="text-white">Full Content (Alternative)</Label>
+                  <Textarea
+                    id="edit-content-text"
+                    placeholder="Or enter your complete content here..."
+                    value={editContentText}
+                    onChange={(e) => setEditContentText(e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[100px]"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Use either Title + Description above, or Full Content here
+                  </p>
+                </div>
+                
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleUpdateContent}

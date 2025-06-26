@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +30,8 @@ const IdeasTab = () => {
   const [viewingIdea, setViewingIdea] = useState<any>(null);
   const [newIdeaContent, setNewIdeaContent] = useState("");
   const [editIdeaContent, setEditIdeaContent] = useState("");
+  const [editIdeaTitle, setEditIdeaTitle] = useState("");
+  const [editIdeaDescription, setEditIdeaDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -282,14 +285,46 @@ const IdeasTab = () => {
   const handleEditIdea = (idea: any) => {
     setEditingIdea(idea);
     setEditIdeaContent(idea.content || "");
+    // Extract title and description from content if they exist
+    const content = idea.content || "";
+    const lines = content.split('\n');
+    if (lines.length > 1) {
+      setEditIdeaTitle(lines[0]);
+      setEditIdeaDescription(lines.slice(1).join('\n'));
+    } else {
+      setEditIdeaTitle("");
+      setEditIdeaDescription(content);
+    }
     setIsEditDialogOpen(true);
   };
 
   const handleUpdateIdea = async () => {
-    if (!editingIdea || !editIdeaContent.trim()) {
+    if (!editingIdea) {
       toast({
         title: "Error",
-        description: "Please enter idea content",
+        description: "No idea selected for editing",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Combine title and description into content
+    let combinedContent = "";
+    if (editIdeaTitle.trim()) {
+      combinedContent = editIdeaTitle.trim();
+      if (editIdeaDescription.trim()) {
+        combinedContent += '\n' + editIdeaDescription.trim();
+      }
+    } else if (editIdeaDescription.trim()) {
+      combinedContent = editIdeaDescription.trim();
+    } else if (editIdeaContent.trim()) {
+      combinedContent = editIdeaContent.trim();
+    }
+
+    if (!combinedContent) {
+      toast({
+        title: "Error",
+        description: "Please enter some content",
         variant: "destructive"
       });
       return;
@@ -299,10 +334,12 @@ const IdeasTab = () => {
     
     try {
       await updateIdea(editingIdea.id, {
-        content: editIdeaContent
+        content: combinedContent
       });
 
       setEditIdeaContent("");
+      setEditIdeaTitle("");
+      setEditIdeaDescription("");
       setEditingIdea(null);
       setIsEditDialogOpen(false);
     } catch (error) {
@@ -620,6 +657,18 @@ const IdeasTab = () => {
                     <p className="text-gray-300">{formatDate(viewingIdea.used_at)}</p>
                   </div>
                 )}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      setIsViewDialogOpen(false);
+                      handleEditIdea(viewingIdea);
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Idea
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
@@ -636,16 +685,43 @@ const IdeasTab = () => {
                 <Label className="text-white">ID</Label>
                 <p className="text-gray-300">{editingIdea?.id}</p>
               </div>
+              
               <div>
-                <Label htmlFor="edit-content" className="text-white">Idea Content</Label>
-                <Textarea
-                  id="edit-content"
-                  placeholder="Enter your content idea..."
-                  value={editIdeaContent}
-                  onChange={(e) => setEditIdeaContent(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[150px]"
+                <Label htmlFor="edit-title" className="text-white">Title (Optional)</Label>
+                <Input
+                  id="edit-title"
+                  placeholder="Enter a title for your idea..."
+                  value={editIdeaTitle}
+                  onChange={(e) => setEditIdeaTitle(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                 />
               </div>
+              
+              <div>
+                <Label htmlFor="edit-description" className="text-white">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  placeholder="Enter the main content/description of your idea..."
+                  value={editIdeaDescription}
+                  onChange={(e) => setEditIdeaDescription(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[120px]"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="edit-content-full" className="text-white">Full Content (Alternative)</Label>
+                <Textarea
+                  id="edit-content-full"
+                  placeholder="Or enter your complete idea content here..."
+                  value={editIdeaContent}
+                  onChange={(e) => setEditIdeaContent(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 min-h-[100px]"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Use either Title + Description above, or Full Content here
+                </p>
+              </div>
+              
               <div className="flex gap-2">
                 <Button 
                   onClick={handleUpdateIdea}
