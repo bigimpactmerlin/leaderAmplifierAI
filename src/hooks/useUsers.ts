@@ -201,7 +201,7 @@ export function useUsers() {
     }
   }
 
-  // Login user by email (simplified - no password required as requested)
+  // Login user by email only (simplified - no password required as requested)
   const loginUserByEmail = async (email: string) => {
     try {
       const { data, error } = await supabase
@@ -237,6 +237,43 @@ export function useUsers() {
     }
   }
 
+  // Login user by email and name (for more secure authentication)
+  const loginUserByEmailAndName = async (email: string, name: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('name', name)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('No user found with this email and name combination. Please check your details or sign up.')
+        }
+        throw error
+      }
+
+      if (data) {
+        setCurrentUser(data)
+        toast({
+          title: "Success",
+          description: `Welcome back, ${data.name}!`
+        })
+        return data
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Invalid email and name combination'
+      console.error('Error logging in user:', err)
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      })
+      throw err
+    }
+  }
+
   // Logout current user
   const logout = () => {
     setCurrentUser(null)
@@ -255,7 +292,6 @@ export function useUsers() {
   useEffect(() => {
     const initializeUsers = async () => {
       await fetchUsers()
-      
       // Don't auto-login any user - let them sign in manually
       setLoading(false)
     }
@@ -275,6 +311,7 @@ export function useUsers() {
     deleteUser,
     setCurrentUserById,
     loginUserByEmail,
+    loginUserByEmailAndName,
     logout,
     isAuthenticated
   }
