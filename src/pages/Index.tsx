@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import WelcomeScreen from "@/components/WelcomeScreen";
 import AutomationForm from "@/components/AutomationForm";
 import Dashboard from "@/components/Dashboard";
@@ -10,6 +10,17 @@ type AppState = "welcome" | "form" | "dashboard" | "login";
 const Index = () => {
   const { currentUser, isAuthenticated } = useUsers();
   const [appState, setAppState] = useState<AppState>("login");
+
+  // Update app state based on authentication status
+  useEffect(() => {
+    if (isAuthenticated()) {
+      if (appState === "login") {
+        setAppState("dashboard");
+      }
+    } else {
+      setAppState("login");
+    }
+  }, [currentUser, isAuthenticated]);
 
   const handleGetStarted = () => {
     if (isAuthenticated()) {
@@ -27,18 +38,13 @@ const Index = () => {
     setAppState("welcome");
   };
 
-  const handleBackToForm = () => {
-    setAppState("form");
+  const handleBackToLogin = () => {
+    setAppState("login");
   };
 
   const handleLoginSuccess = () => {
     setAppState("dashboard");
   };
-
-  // If user is authenticated, show dashboard by default
-  if (isAuthenticated() && appState === "login") {
-    setAppState("dashboard");
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,7 +61,7 @@ const Index = () => {
       )}
       
       {appState === "dashboard" && (
-        <Dashboard onBack={handleBackToForm} />
+        <Dashboard onBack={handleBackToLogin} />
       )}
     </div>
   );
