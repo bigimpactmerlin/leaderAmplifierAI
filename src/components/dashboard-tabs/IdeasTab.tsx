@@ -47,9 +47,9 @@ const IdeasTab = () => {
 
   // Webhook URLs for different platforms
   const webhookUrls = {
-    LinkedIn: "https://hook.eu2.make.com/uo1mv8iqh5dnljhodml75kppe8e6j1fy",
+    LinkedIn: "https://hook.eu2.make.com/xaikyfjrn4tbhuut7klil7e3f2slqt8w",
     Instagram: "https://hook.eu2.make.com/jd7mofm8w2622mjadxlya9w481f7rboq",
-    Facebook: "https://hook.eu2.make.com/eeia98ktnu8vth9epzmv89ym4a6eeyi3"
+    Facebook: "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje"
   };
 
   const handleRowClick = (ideaId: number) => {
