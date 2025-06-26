@@ -510,12 +510,8 @@ const IdeasTab = () => {
                   </TableCell>
                   <TableCell className="text-white font-medium max-w-xs">
                     <div 
-                      className="truncate cursor-pointer hover:text-blue-300" 
+                      className="truncate" 
                       title={idea.content || ''}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewIdea(idea);
-                      }}
                     >
                       {idea.content || 'No content'}
                     </div>

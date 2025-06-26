@@ -136,7 +136,7 @@ const ContentTab = () => {
 
       // Call Facebook webhook for selected content if Facebook is in selected platforms
       if (selectedPlatforms.includes('facebook')) {
-        const facebookWebhookUrl = "https://hook.eu2.make.com/eeia98ktnu8vth9epzmv89ym4a6eeyi3";
+        const facebookWebhookUrl = "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje";
         
         for (const contentId of selectedContent) {
           try {
@@ -302,7 +302,7 @@ const ContentTab = () => {
         });
         console.log(`LinkedIn webhook called for content ID: ${contentId}`);
       } else if (platform === 'facebook') {
-        const facebookWebhookUrl = "https://hook.eu2.make.com/eeia98ktnu8vth9epzmv89ym4a6eeyi3";
+        const facebookWebhookUrl = "https://hook.eu2.make.com/2fx3hwsl626vxuefc6g8jkbnwqn6wvje";
         
         await fetch(facebookWebhookUrl, {
           method: "POST",
