@@ -1,33 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import WelcomeScreen from "@/components/WelcomeScreen";
 import AutomationForm from "@/components/AutomationForm";
 import Dashboard from "@/components/Dashboard";
-import LoginPage from "@/components/auth/LoginPage";
-import { useUsers } from "@/hooks/useUsers";
 
-type AppState = "welcome" | "form" | "dashboard" | "login";
+type AppState = "welcome" | "form" | "dashboard";
 
 const Index = () => {
-  const { currentUser, isAuthenticated } = useUsers();
-  const [appState, setAppState] = useState<AppState>("login");
-
-  // Update app state based on authentication status
-  useEffect(() => {
-    if (isAuthenticated()) {
-      if (appState === "login") {
-        setAppState("dashboard");
-      }
-    } else {
-      setAppState("login");
-    }
-  }, [currentUser, isAuthenticated]);
+  const [appState, setAppState] = useState<AppState>("dashboard");
 
   const handleGetStarted = () => {
-    if (isAuthenticated()) {
-      setAppState("dashboard");
-    } else {
-      setAppState("login");
-    }
+    setAppState("form");
   };
 
   const handleFormComplete = () => {
@@ -38,20 +20,12 @@ const Index = () => {
     setAppState("welcome");
   };
 
-  const handleBackToLogin = () => {
-    setAppState("login");
-  };
-
-  const handleLoginSuccess = () => {
-    setAppState("dashboard");
+  const handleBackToForm = () => {
+    setAppState("form");
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {appState === "login" && (
-        <LoginPage onLoginSuccess={handleLoginSuccess} />
-      )}
-      
       {appState === "welcome" && (
         <WelcomeScreen onGetStarted={handleGetStarted} />
       )}
@@ -61,7 +35,7 @@ const Index = () => {
       )}
       
       {appState === "dashboard" && (
-        <Dashboard onBack={handleBackToLogin} />
+        <Dashboard onBack={handleBackToForm} />
       )}
     </div>
   );

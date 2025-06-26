@@ -68,28 +68,6 @@ export function useUsers() {
   // Create a new user
   const createUser = async (userData: UserInsert) => {
     try {
-      // Check if user with this email already exists
-      const { data: existingUser, error: checkError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', userData.email)
-        .single()
-
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
-        throw checkError
-      }
-
-      if (existingUser) {
-        // User exists, log them in instead
-        setCurrentUser(existingUser)
-        toast({
-          title: "Welcome back!",
-          description: `User with email ${userData.email} already exists. You have been logged in.`
-        })
-        return existingUser
-      }
-
-      // Create new user
       const { data, error } = await supabase
         .from('users')
         .insert([userData])
@@ -102,10 +80,9 @@ export function useUsers() {
 
       if (data) {
         setUsers(prev => [data, ...prev])
-        setCurrentUser(data) // Auto-login the new user
         toast({
           title: "Success",
-          description: "User created successfully and logged in"
+          description: "User created successfully"
         })
         return data
       }
@@ -201,7 +178,7 @@ export function useUsers() {
     }
   }
 
-  // Login user by email only (simplified - no password required as requested)
+  // Login user by email (simplified - no password required as requested)
   const loginUserByEmail = async (email: string) => {
     try {
       const { data, error } = await supabase
@@ -211,9 +188,6 @@ export function useUsers() {
         .single()
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          throw new Error('No user found with this email address. Please sign up first.')
-        }
         throw error
       }
 
@@ -237,43 +211,6 @@ export function useUsers() {
     }
   }
 
-  // Login user by email and name (enhanced authentication)
-  const loginUserByEmailAndName = async (email: string, name: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .eq('name', name)
-        .single()
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          throw new Error('No user found with this email and name combination. Please check your credentials or sign up.')
-        }
-        throw error
-      }
-
-      if (data) {
-        setCurrentUser(data)
-        toast({
-          title: "Success",
-          description: `Welcome back, ${data.name}!`
-        })
-        return data
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Invalid credentials'
-      console.error('Error logging in user:', err)
-      toast({
-        title: "Authentication Failed",
-        description: errorMessage,
-        variant: "destructive"
-      })
-      throw err
-    }
-  }
-
   // Logout current user
   const logout = () => {
     setCurrentUser(null)
@@ -283,18 +220,34 @@ export function useUsers() {
     })
   }
 
-  // Check if user is authenticated
-  const isAuthenticated = () => {
-    return currentUser !== null
-  }
-
   // Initialize and load users
   useEffect(() => {
     const initializeUsers = async () => {
       await fetchUsers()
       
-      // Don't auto-login any user - let them sign in manually
-      setLoading(false)
+      // Try to set a demo user if available, otherwise create one
+      try {
+        const { data: existingUsers } = await supabase
+          .from('users')
+          .select('*')
+          .limit(1)
+        
+        if (existingUsers && existingUsers.length > 0) {
+          setCurrentUser(existingUsers[0])
+        } else {
+          // Create a demo user if none exist
+          const demoUser = await createUser({
+            name: "Demo User",
+            email: "demo@example.com",
+            domain: "technology"
+          })
+          if (demoUser) {
+            setCurrentUser(demoUser)
+          }
+        }
+      } catch (err) {
+        console.error('Error initializing demo user:', err)
+      }
     }
 
     initializeUsers()
@@ -312,8 +265,6 @@ export function useUsers() {
     deleteUser,
     setCurrentUserById,
     loginUserByEmail,
-    loginUserByEmailAndName,
-    logout,
-    isAuthenticated
+    logout
   }
 }

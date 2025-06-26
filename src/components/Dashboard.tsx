@@ -28,7 +28,6 @@ const Dashboard = ({ onBack }: DashboardProps) => {
 
   const handleSignOut = () => {
     logout();
-    // Redirect to login page
     onBack();
   };
 
