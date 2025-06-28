@@ -141,6 +141,52 @@ export interface Database {
           key?: string | null
         }
       }
+      idea_generation_prompt: {
+        Row: {
+          id: number
+          created_at: string
+          name: string | null
+          prompt: string | null
+          status: string | null
+        }
+        Insert: {
+          id?: number
+          created_at?: string
+          name?: string | null
+          prompt?: string | null
+          status?: string | null
+        }
+        Update: {
+          id?: number
+          created_at?: string
+          name?: string | null
+          prompt?: string | null
+          status?: string | null
+        }
+      }
+      cotent_generation_prompt: {
+        Row: {
+          id: number
+          created_at: string
+          name: string | null
+          prompt: string | null
+          status: string | null
+        }
+        Insert: {
+          id?: number
+          created_at?: string
+          name?: string | null
+          prompt?: string | null
+          status?: string | null
+        }
+        Update: {
+          id?: number
+          created_at?: string
+          name?: string | null
+          prompt?: string | null
+          status?: string | null
+        }
+      }
     }
   }
 }
@@ -160,6 +206,14 @@ export type UserUpdate = Database['public']['Tables']['users']['Update']
 export type Source = Database['public']['Tables']['sources']['Row']
 export type SourceInsert = Database['public']['Tables']['sources']['Insert']
 export type SourceUpdate = Database['public']['Tables']['sources']['Update']
+
+export type IdeaGenerationPrompt = Database['public']['Tables']['idea_generation_prompt']['Row']
+export type IdeaGenerationPromptInsert = Database['public']['Tables']['idea_generation_prompt']['Insert']
+export type IdeaGenerationPromptUpdate = Database['public']['Tables']['idea_generation_prompt']['Update']
+
+export type ContentGenerationPrompt = Database['public']['Tables']['cotent_generation_prompt']['Row']
+export type ContentGenerationPromptInsert = Database['public']['Tables']['cotent_generation_prompt']['Insert']
+export type ContentGenerationPromptUpdate = Database['public']['Tables']['cotent_generation_prompt']['Update']
 
 // Test connection function
 export const testConnection = async () => {
